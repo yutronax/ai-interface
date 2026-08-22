@@ -183,5 +183,7 @@ export const SECTIONS = [
   { id: "experience", label: "EXPERIENCE" },
   { id: "projects", label: "PROJECTS" },
   { id: "stack", label: "STACK" },
+  { id: "pipeline", label: "PIPELINE" },
   { id: "github", label: "GITHUB" },
+  { id: "final", label: "FINAL STATE" },
 ];
