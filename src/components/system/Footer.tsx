@@ -37,7 +37,7 @@ export function Footer() {
                 text={word}
                 delay={i * 0.12}
                 step={0.035}
-                className={i === STATEMENT.length - 1 ? "text-signal" : undefined}
+                {...(i === STATEMENT.length - 1 ? { className: "text-signal" } : {})}
               />
             </span>
           ))}
