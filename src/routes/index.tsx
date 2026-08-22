@@ -1,24 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Hero } from "@/components/system/Hero";
+import { Identity } from "@/components/system/Identity";
+import { Experience } from "@/components/system/Experience";
+import { Projects } from "@/components/system/Projects";
+import { TechStack } from "@/components/system/TechStack";
+import { AiPipeline } from "@/components/system/AiPipeline";
+import { GitHubSection } from "@/components/system/GitHubSection";
+import { Footer } from "@/components/system/Footer";
+import { NavIndicator } from "@/components/system/NavIndicator";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Yusuf Çınar — AI Engineer" },
+      {
+        name: "description",
+        content:
+          "Operating interface of Yusuf Çınar, AI Engineer — multi-agent systems, computer vision and NLP pipelines. OBSS, TÜBİTAK, AI-native development.",
+      },
+      { property: "og:title", content: "Yusuf Çınar — AI Engineer" },
+      {
+        property: "og:description",
+        content:
+          "A scroll-driven system interface: multi-agent systems, computer vision, NLP pipelines and AI-native development.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="relative min-h-screen bg-background text-foreground">
+      <NavIndicator />
+      <Hero />
+      <Identity />
+      <Experience />
+      <Projects />
+      <TechStack />
+      <AiPipeline />
+      <GitHubSection />
+      <Footer />
+    </main>
   );
 }
