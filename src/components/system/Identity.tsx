@@ -15,16 +15,17 @@ const LAYERS: Layer[] = [
   { key: "AFFILIATION", value: "OBSS · TÜBİTAK", from: { x: 0, y: 160 } },
 ];
 
-function LayerRow({ layer, progress, i }: { layer: Layer; progress: MotionValue<number>; i: number }) {
-  const start = 0.05 + i * 0.06;
-  const x = useTransform(progress, [start, start + 0.45], [layer.from.x, 0]);
-  const y = useTransform(progress, [start, start + 0.45], [layer.from.y, 0]);
-  const opacity = useTransform(progress, [start, start + 0.2], [0, 1]);
-  const blurOut = useTransform(progress, [start, start + 0.45], [0.4, 1]);
+type LayerStyle = {
+  x: MotionValue<number>;
+  y: MotionValue<number>;
+  opacity: MotionValue<number>;
+  scaleY: MotionValue<number>;
+};
 
+function LayerRow({ layer, style }: { layer: Layer; style: LayerStyle }) {
   return (
     <motion.div
-      style={{ x, y, opacity, scaleY: blurOut }}
+      style={style}
       className="hair grid grid-cols-[8rem_1fr] items-baseline gap-4 border-x-0 border-b-0 border-t px-1 py-4 sm:grid-cols-[12rem_1fr]"
     >
       <span className="label">{layer.key}</span>
@@ -38,6 +39,18 @@ export function Identity() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end end"] });
   const frameWidth = useTransform(scrollYProgress, [0.1, 0.7], ["30%", "100%"]);
   const indexOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+
+  // Compute scroll-linked transforms here in the parent: child-level
+  // useTransform on a passed MotionValue freezes mid-flight in this stack.
+  const layerStyles = LAYERS.map((l, i): LayerStyle => {
+    const start = 0.05 + i * 0.06;
+    return {
+      x: useTransform(scrollYProgress, [start, start + 0.45], [l.from.x, 0]),
+      y: useTransform(scrollYProgress, [start, start + 0.45], [l.from.y, 0]),
+      opacity: useTransform(scrollYProgress, [start, start + 0.2], [0, 1]),
+      scaleY: useTransform(scrollYProgress, [start, start + 0.45], [0.4, 1]),
+    };
+  });
 
   return (
     <div id="identity" ref={ref} className="relative h-[180vh] w-full">
@@ -55,7 +68,7 @@ export function Identity() {
 
           <div className="mt-8">
             {LAYERS.map((l, i) => (
-              <LayerRow key={l.key} layer={l} progress={scrollYProgress} i={i} />
+              <LayerRow key={l.key} layer={l} style={layerStyles[i]!} />
             ))}
           </div>
 

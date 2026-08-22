@@ -3,24 +3,23 @@ import { useRef, useState } from "react";
 import { TECH_GRAPH } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
 
+type BranchStyle = {
+  lineScale: MotionValue<number>;
+  bodyOpacity: MotionValue<number>;
+  bodyX: MotionValue<number>;
+};
+
 function Branch({
   child,
-  i,
-  progress,
+  style,
   active,
   onSelect,
 }: {
   child: { name: string; leaves: string[] };
-  i: number;
-  progress: MotionValue<number>;
+  style: BranchStyle;
   active: boolean;
   onSelect: (name: string | null) => void;
 }) {
-  const start = 0.12 + i * 0.16;
-  const lineScale = useTransform(progress, [start, start + 0.1], [0, 1]);
-  const bodyOpacity = useTransform(progress, [start + 0.04, start + 0.12], [0, 1]);
-  const bodyX = useTransform(progress, [start + 0.04, start + 0.14], [-24, 0]);
-
   return (
     <div
       className="relative flex items-start gap-0"
@@ -30,7 +29,7 @@ function Branch({
       {/* connector */}
       <div className="mt-5 flex w-10 items-center sm:w-16">
         <motion.span
-          style={{ scaleX: lineScale, transformOrigin: "left" }}
+          style={{ scaleX: style.lineScale, transformOrigin: "left" }}
           className={cn(
             "h-px w-full transition-colors duration-300",
             active ? "bg-signal" : "bg-border",
@@ -44,7 +43,10 @@ function Branch({
         />
       </div>
 
-      <motion.div style={{ opacity: bodyOpacity, x: bodyX }} className="min-w-0 flex-1">
+      <motion.div
+        style={{ opacity: style.bodyOpacity, x: style.bodyX }}
+        className="min-w-0 flex-1"
+      >
         <div
           className={cn(
             "mono text-xl font-medium tracking-[0.06em] transition-colors duration-300 sm:text-2xl",
@@ -88,6 +90,17 @@ export function TechStack() {
   const trunkScale = useTransform(scrollYProgress, [0.08, 0.75], [0, 1]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.06], [0, 1]);
 
+  // Parent-computed transforms: child-level useTransform on a passed
+  // MotionValue freezes mid-flight in this stack.
+  const branchStyles = TECH_GRAPH.children.map((_, i): BranchStyle => {
+    const start = 0.12 + i * 0.16;
+    return {
+      lineScale: useTransform(scrollYProgress, [start, start + 0.1], [0, 1]),
+      bodyOpacity: useTransform(scrollYProgress, [start + 0.04, start + 0.12], [0, 1]),
+      bodyX: useTransform(scrollYProgress, [start + 0.04, start + 0.14], [-24, 0]),
+    };
+  });
+
   const leafCount = TECH_GRAPH.children.reduce((n, c) => n + c.leaves.length, 0);
 
   return (
@@ -130,8 +143,7 @@ export function TechStack() {
                 <Branch
                   key={c.name}
                   child={c}
-                  i={i}
-                  progress={scrollYProgress}
+                  style={branchStyles[i]!}
                   active={selected === c.name}
                   onSelect={setSelected}
                 />

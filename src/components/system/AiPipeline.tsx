@@ -3,27 +3,26 @@ import { useRef, useState } from "react";
 import { PIPELINE } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
 
+const STAGE_STARTS = PIPELINE.map((_, i) => 0.12 + i * 0.28);
+
+type StageStyle = {
+  bodyOpacity: MotionValue<number>;
+  bodyY: MotionValue<number>;
+};
+
 function Stage({
   stage,
   i,
-  progress,
-  hovered,
+  style,
+  active,
   onHover,
 }: {
   stage: (typeof PIPELINE)[number];
   i: number;
-  progress: MotionValue<number>;
-  hovered: boolean;
+  style: StageStyle;
+  active: boolean;
   onHover: (i: number | null) => void;
 }) {
-  const start = 0.12 + i * 0.28;
-  const [scrollActive, setScrollActive] = useState(false);
-  useMotionValueEvent(progress, "change", (v) => setScrollActive(v >= start));
-
-  const bodyOpacity = useTransform(progress, [start, start + 0.14], [0, 1]);
-  const bodyY = useTransform(progress, [start, start + 0.16], [26, 0]);
-  const active = scrollActive || hovered;
-
   return (
     <div
       className="relative flex-1"
@@ -57,7 +56,7 @@ function Stage({
         </span>
       </div>
 
-      <motion.div style={{ opacity: bodyOpacity, y: bodyY }} className="mt-6">
+      <motion.div style={{ opacity: style.bodyOpacity, y: style.bodyY }} className="mt-6">
         <div
           className={cn(
             "text-3xl font-semibold tracking-[-0.03em] transition-colors duration-500 sm:text-4xl",
@@ -86,11 +85,30 @@ function Stage({
 export function AiPipeline() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [scrollStage, setScrollStage] = useState(-1);
   const [hovered, setHovered] = useState<number | null>(null);
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    let s = -1;
+    STAGE_STARTS.forEach((start, i) => {
+      if (v >= start) s = i;
+    });
+    setScrollStage(s);
+  });
 
   const seg1 = useTransform(scrollYProgress, [0.12, 0.4], ["0%", "100%"]);
   const seg2 = useTransform(scrollYProgress, [0.4, 0.68], ["0%", "100%"]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.08], [0, 1]);
+
+  // Parent-computed transforms: child-level useTransform on a passed
+  // MotionValue freezes mid-flight in this stack.
+  const stageStyles = PIPELINE.map((_, i): StageStyle => {
+    const start = STAGE_STARTS[i]!;
+    return {
+      bodyOpacity: useTransform(scrollYProgress, [start, start + 0.14], [0, 1]),
+      bodyY: useTransform(scrollYProgress, [start, start + 0.16], [26, 0]),
+    };
+  });
 
   return (
     <div id="pipeline" ref={ref} className="relative h-[220vh] w-full">
@@ -120,8 +138,8 @@ export function AiPipeline() {
                   key={s.stage}
                   stage={s}
                   i={i}
-                  progress={scrollYProgress}
-                  hovered={hovered === i}
+                  style={stageStyles[i]!}
+                  active={i <= scrollStage || hovered === i}
                   onHover={setHovered}
                 />
               ))}
