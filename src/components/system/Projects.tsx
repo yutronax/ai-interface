@@ -1,5 +1,5 @@
-import { motion, useScroll, useTransform } from "motion/react";
-import { useRef } from "react";
+import { motion, useMotionValue, useMotionValueEvent, useScroll, useTransform } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/portfolio-data";
 import { ProjectVisual } from "./ProjectVisual";
 
@@ -82,9 +82,25 @@ function Panel({ p }: { p: Project }) {
 
 export function Projects() {
   const ref = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const x = useTransform(scrollYProgress, [0, 1], ["2vw", "-232vw"]);
   const progress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  // Measure the track so the last panel lands flush instead of overshooting.
+  const [range, setRange] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      const el = trackRef.current;
+      if (!el) return;
+      setRange(Math.max(0, el.scrollWidth - window.innerWidth + 48));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const x = useMotionValue(0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => x.set(-range * v));
 
   return (
     <div id="projects" ref={ref} className="relative h-[420vh] w-full">
@@ -99,7 +115,7 @@ export function Projects() {
           <motion.div style={{ width: progress }} className="h-px bg-signal" />
         </div>
 
-        <motion.div style={{ x }} className="mt-6 flex gap-6 pl-5 sm:pl-10">
+        <motion.div ref={trackRef} style={{ x }} className="mt-6 flex gap-6 pl-5 sm:pl-10">
           {PROJECTS.map((p) => (
             <Panel key={p.name} p={p} />
           ))}

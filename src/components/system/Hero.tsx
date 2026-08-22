@@ -43,7 +43,7 @@ export function Hero() {
           className="scan-line pointer-events-none absolute inset-0"
         />
 
-        <div className="relative mx-auto flex w-full max-w-[1400px] flex-1 flex-col justify-between px-5 pb-10 pt-6 sm:px-10 sm:pb-14 sm:pt-8">
+        <div className="relative mx-auto flex w-full max-w-[1400px] flex-1 flex-col justify-between px-5 pb-24 pt-6 sm:px-10 sm:pb-28 sm:pt-8">
           <motion.div style={{ opacity: bootOpacity }} className="mono space-y-1 text-[10px]">
             {BOOT.map((line, i) => (
               <div
