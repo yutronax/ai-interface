@@ -1,4 +1,5 @@
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useTransform } from "motion/react";
+import { useSectionProgress } from "./use-section-progress";
 import { useRef } from "react";
 import { IDENTITY } from "@/lib/portfolio-data";
 import { CharReveal, Hairline, Meta, TypeLines } from "./primitives";
@@ -7,7 +8,7 @@ const STATEMENT = ["BUILD", "SYSTEMS", "THAT", "ACT."];
 
 export function Footer() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end end"] });
+  const scrollYProgress = useSectionProgress(ref, "enter");
   const seamScale = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
   const statusOpacity = useTransform(scrollYProgress, [0.4, 0.7], [0, 1]);
 

@@ -1,4 +1,5 @@
-import { motion, useMotionValue, useMotionValueEvent, useScroll, useTransform } from "motion/react";
+import { motion, useMotionValue, useMotionValueEvent, useTransform } from "motion/react";
+import { useSectionProgress } from "./use-section-progress";
 import { useEffect, useRef, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/portfolio-data";
 import { ProjectVisual } from "./ProjectVisual";
@@ -83,7 +84,7 @@ function Panel({ p }: { p: Project }) {
 export function Projects() {
   const ref = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const scrollYProgress = useSectionProgress(ref, "pin");
   const progress = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   // Measure the track so the last panel lands flush instead of overshooting.

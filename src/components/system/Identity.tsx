@@ -1,4 +1,5 @@
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, useTransform, type MotionValue } from "motion/react";
+import { useSectionProgress } from "./use-section-progress";
 import { useRef } from "react";
 import { IDENTITY } from "@/lib/portfolio-data";
 
@@ -36,7 +37,7 @@ function LayerRow({ layer, style }: { layer: Layer; style: LayerStyle }) {
 
 export function Identity() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end end"] });
+  const scrollYProgress = useSectionProgress(ref, "enter");
   const frameWidth = useTransform(scrollYProgress, [0.1, 0.7], ["30%", "100%"]);
   const indexOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
 

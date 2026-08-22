@@ -1,18 +1,11 @@
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { IDENTITY } from "@/lib/portfolio-data";
-
-const BOOT = [
-  "SYSTEM INITIALIZING",
-  "→ IDENTITY",
-  "→ DOMAIN",
-  "→ CURRENT WORK",
-  "→ SYSTEM STATUS",
-];
-
+import { useSectionProgress } from "./use-section-progress";
+...
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const scrollYProgress = useSectionProgress(ref, "pin");
 
   const nameScale = useTransform(scrollYProgress, [0, 1], [1, 0.22]);
   const nameY = useTransform(scrollYProgress, [0, 1], ["0vh", "-32vh"]);

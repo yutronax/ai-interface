@@ -1,4 +1,5 @@
-import { motion, useScroll, useTransform, useMotionValueEvent, type MotionValue } from "motion/react";
+import { motion, useTransform, useMotionValueEvent, type MotionValue } from "motion/react";
+import { useSectionProgress } from "./use-section-progress";
 import { useRef, useState } from "react";
 import { PIPELINE } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
@@ -84,7 +85,7 @@ function Stage({
 
 export function AiPipeline() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const scrollYProgress = useSectionProgress(ref, "pin");
   const [scrollStage, setScrollStage] = useState(-1);
   const [hovered, setHovered] = useState<number | null>(null);
 

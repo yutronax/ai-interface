@@ -1,4 +1,5 @@
-import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { motion, useTransform, type MotionValue } from "motion/react";
+import { useSectionProgress } from "./use-section-progress";
 import { useRef, useState } from "react";
 import { TECH_GRAPH } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
@@ -82,7 +83,7 @@ function Branch({
 
 export function TechStack() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const scrollYProgress = useSectionProgress(ref, "pin");
   const [selected, setSelected] = useState<string | null>(null);
 
   const rootScale = useTransform(scrollYProgress, [0, 0.12], [0.85, 1]);
