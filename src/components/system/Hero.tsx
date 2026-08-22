@@ -2,7 +2,15 @@ import { motion, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { IDENTITY } from "@/lib/portfolio-data";
 import { useSectionProgress } from "./use-section-progress";
-...
+
+const BOOT = [
+  "SYSTEM INITIALIZING",
+  "→ IDENTITY",
+  "→ DOMAIN",
+  "→ CURRENT WORK",
+  "→ SYSTEM STATUS",
+];
+
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const scrollYProgress = useSectionProgress(ref, "pin");
