@@ -3,8 +3,9 @@ export const IDENTITY = {
   role: "AI Engineer",
   domains: ["MULTI-AGENT SYSTEMS", "COMPUTER VISION", "NLP PIPELINES"],
   status: ["OBSS AI INTERN", "TÜBİTAK RESEARCHER"],
-  github: "https://github.com/yusufcinarci",
-  linkedin: "https://www.linkedin.com/in/yusufcinarci/",
+  github: "https://github.com/yutronax",
+  linkedin: "https://linkedin.com/in/yusuf-cinar282",
+  email: "mailto:kuyusuzyusuf123@gmail.com",
 };
 
 export type Experience = {
@@ -83,7 +84,7 @@ export const PROJECTS: Project[] = [
     summary: "Sentinel-2 flood segmentation over multi-region scenes.",
     stack: ["PyTorch", "DeepLabV3+", "Rasterio", "OpenCV"],
     detail: "U-Net baseline replaced by DeepLabV3+ with ASPP; IoU +12% on held-out regions.",
-    url: "https://github.com/yusufcinarci",
+    url: "https://github.com/yutronax",
   },
   {
     index: "02",
@@ -92,7 +93,7 @@ export const PROJECTS: Project[] = [
     summary: "Vision-and-language transformer experiments without convolutions.",
     stack: ["Transformers", "PyTorch", "CLIP", "VQA"],
     detail: "Patch-embedded image tokens fused with text tokens in a single transformer stack.",
-    url: "https://github.com/yusufcinarci",
+    url: "https://github.com/yutronax",
   },
   {
     index: "03",
@@ -101,7 +102,7 @@ export const PROJECTS: Project[] = [
     summary: "An agentic desktop-style environment for AI operations.",
     stack: ["React", "TypeScript", "LLM Agents", "FastAPI"],
     detail: "File-tree addressable agents; each window is a process with its own tool scope.",
-    url: "https://github.com/yusufcinarci",
+    url: "https://github.com/yutronax",
   },
   {
     index: "04",
@@ -110,7 +111,7 @@ export const PROJECTS: Project[] = [
     summary: "Classical ML pipelines, benchmarking and feature analysis.",
     stack: ["scikit-learn", "NumPy", "Pandas", "Matplotlib"],
     detail: "Reproducible experiment runners with cross-validated metric reporting.",
-    url: "https://github.com/yusufcinarci",
+    url: "https://github.com/yutronax",
   },
 ];
 

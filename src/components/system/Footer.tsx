@@ -79,7 +79,7 @@ export function Footer() {
             <a
               href={IDENTITY.github}
               target="_blank"
-              rel="noreferrer noopener"
+              rel="noopener noreferrer"
               className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
             >
               {"<>"} GITHUB
@@ -88,10 +88,17 @@ export function Footer() {
             <a
               href={IDENTITY.linkedin}
               target="_blank"
-              rel="noreferrer noopener"
+              rel="noopener noreferrer"
               className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
             >
               [in] LINKEDIN
+              <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
+            </a>
+            <a
+              href={IDENTITY.email}
+              className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
+            >
+              [@] MAIL
               <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
             </a>
           </div>
