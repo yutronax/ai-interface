@@ -3,7 +3,7 @@ version: "1"
 services:
   - type: web
     name: ai-interface
-    env: static
+    env: node
     buildCommand: bun install && bun run build
-    staticPublishPath: .output/public
+    startCommand: node .output/server/index.mjs
     branch: main
