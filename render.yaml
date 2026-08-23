@@ -1,10 +1,9 @@
 # Exported from Render on 2026-08-23T21:17:40Z
 version: "1"
 services:
-- type: web
-  name: ai-interface
-  runtime: static
-  repo: https://github.com/yutronax/ai-interface
-  buildCommand: bun install && bun run build
-  staticPublishPath: ./dist
-  autoDeployTrigger: commit
+  - type: web
+    name: ai-interface
+    env: static
+    buildCommand: bun install && bun run build
+    staticPublishPath: .output/public
+    branch: main
