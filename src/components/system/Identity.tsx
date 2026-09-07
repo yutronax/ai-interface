@@ -77,7 +77,7 @@ export function Identity() {
             <span className="text-signal-dim">/ / </span>
             Systems that plan, perceive and act. Research-grade computer vision, production NLP
             pipelines and agentic development workflows.
-            <span className="pl-2 text-border">
+            <span className="pl-2 text-muted-foreground">
               [{IDENTITY.domains.length} ACTIVE DOMAINS]
             </span>
           </div>

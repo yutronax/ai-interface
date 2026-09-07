@@ -1,0 +1,72 @@
+{
+  "task": "proje-karti-tiklanabilir-kanit",
+  "reviewed_at": "2026-09-07T22:10:00+03:00",
+  "summary": "Implementation is minimal, correctly scoped to AC-1/AC-2/AC-5/AC-6 (link-only evidence), and is backed by 16 passing tests that map cleanly to the acceptance criteria table. The only real issues are a small rel-attribute inconsistency between the two links, an unused `evidence.type` discriminant, and documentation drift (jsdom vs the actually-configured happy-dom) plus a repo-wide eslint.config.js side effect that, while justified and disclosed, was made outside this task's declared file scope.",
+  "findings": [
+    {
+      "severity": "low",
+      "category": "security",
+      "file": "src/components/system/Projects.tsx",
+      "issue": "The new evidence link uses `rel=\"noreferrer\"` (line 83) while the pre-existing GitHub link uses `rel=\"noreferrer noopener\"` (line 73) for the same `target=\"_blank\"` pattern.",
+      "better_approach": "Use `rel=\"noreferrer noopener\"` on the evidence link too, matching the existing GitHub link.",
+      "reason": "Consistency with the established pattern in the same file; `noreferrer` alone is sufficient in modern browsers but mixing conventions in one component reads as an oversight and could regress if someone copies the weaker pattern elsewhere. Test (`Projects.test.tsx:53`) only asserts rel contains 'noreferrer', so it does not catch this drift."
+    },
+    {
+      "severity": "low",
+      "category": "caveman",
+      "file": "src/lib/portfolio-data.ts",
+      "issue": "`evidence.type: \"link\"` is a single-value string literal discriminant that is never branched on anywhere in Projects.tsx — it's stored but unused data (dead field) at this point in time.",
+      "better_approach": "Either drop `type` until a second variant (e.g. `\"image\"`) is actually implemented, or keep it but note explicitly in a code comment that it's a forward-compat placeholder for AC-3/AC-4.",
+      "reason": "CAVEMAN principle: don't add fields/abstractions the current code doesn't use. plan.md itself flags this as intentional ('type düzeyinde opsiyonel genişletilebilir bırakılır'), so it's a conscious tradeoff, but it is literally unused code today and should be called out rather than silently accepted."
+    },
+    {
+      "severity": "low",
+      "category": "correctness",
+      "file": "obss_project/artifacts/proje-karti-tiklanabilir-kanit/test_diff.md",
+      "issue": "test_diff.md and verify_report.md both describe the test environment as 'jsdom', but vitest.config.ts actually configures `environment: \"happy-dom\"`.",
+      "better_approach": "Correct the artifact docs to say happy-dom, or switch vitest.config.ts to jsdom if that was the intended choice.",
+      "reason": "Documentation/traceability accuracy — future maintainers reading test_diff.md will look for a jsdom dependency that isn't actually used, and the IntersectionObserver mock rationale ('jsdom'da bu API'yi bulamadığı için') is describing the wrong runtime."
+    },
+    {
+      "severity": "medium",
+      "category": "scope",
+      "file": "eslint.config.js",
+      "issue": "eslint.config.js was modified (removal of eslint-plugin-prettier/recommended) to work around a toolchain breakage caused by adding vitest as a devDependency for this task. This file is not listed in atdd.md's affected modules and the change has repo-wide effect: it unmasked ~15,800 pre-existing lint errors across unrelated files (AiPipeline.tsx, Identity.tsx, TechStack.tsx, etc.).",
+      "better_approach": "Keep the eslint.config.js fix, since it's a legitimate and well-documented unblock, but land it as a separate, clearly-labeled commit/PR from the evidence-link feature, and file the 15,800 pre-existing lint errors as a tracked follow-up Saga item before merge, not just a note in verify_report.md.",
+      "reason": "atdd.md explicitly scopes this task to the project-card/data files; a global toolchain config change bundled into the same diff makes the feature PR harder to review/revert independently, and the newly-surfaced lint debt is a project-wide finding that deserves its own visibility rather than being buried in this task's verify report."
+    }
+  ],
+  "strengths": [
+    "Panel component keeps the existing GitHub link (href/target/rel/className) completely untouched — additive-only change satisfies AC-2/AC-6 rollback expectation in atdd.md line 84.",
+    "evidence field is optional (`evidence?: {...}`) so all 4 existing PROJECTS entries compile without modification — build/tsc/lint all pass per verify_report.md gates 2, 4, 5.",
+    "Test suite (Projects.test.tsx) directly names each `describe` block after the AC it verifies (AC-1/AC-2/AC-5/AC-6), making the ATDD traceability easy to audit; 16/16 tests pass.",
+    "security-scan (verify_report.md gate 10) correctly found no issue since evidence.url/label are static, developer-controlled TypeScript literals, not user input — no injection surface introduced.",
+    "AC-3/AC-4 deferral (image/GIF evidence, lazy-load, prefers-reduced-motion) is consistently and explicitly documented across atdd.md, plan.md, code_diff.md, test_diff.md and verify_report.md as a conscious scope decision rather than a silently dropped requirement."
+  ],
+  "risks": [
+    "PROJECTS array still has no real evidence data for any of the 4 projects (placeholder-only) — the feature is merged as pure mechanism with zero user-visible effect until content is added in a follow-up task, so the stated benchmark ('60-80% of featured cards should have clickable evidence') is not yet met.",
+    "The eslint.config.js change surfaces ~15,800 pre-existing errors project-wide; if not tracked as a follow-up item, this technical debt risks being forgotten since it was discovered as a side effect rather than the primary goal of a task.",
+    "No automated check exists (and none is planned) for evidence URLs going stale/404 (atdd.md explicitly accepts this as out of scope) — acceptable per spec, but worth reconfirming with the user before real evidence links are entered later."
+  ],
+  "caveman_review": {
+    "complexity": "low",
+    "unnecessary_files": 0,
+    "unnecessary_helpers": 0,
+    "unnecessary_abstractions": 1
+  },
+  "scope_review": {
+    "matches_atdd": true,
+    "scope_expansion": true
+  },
+  "ready_to_commit": {
+    "atdd_satisfied": true,
+    "tests_passed": true,
+    "no_critical_findings": true,
+    "scope_respected": false,
+    "caveman_satisfied": true,
+    "security_acceptable": true,
+    "maintainability_acceptable": true,
+    "no_blocking_risks": true
+  },
+  "verdict": "approve-with-changes"
+}

@@ -43,7 +43,7 @@ function ExecutionBlock({ exp, i }: { exp: Exp; i: number }) {
   return (
     <article ref={ref} className="relative py-20">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-4xl font-semibold tracking-[-0.03em] sm:text-6xl">
+        <h2 className="text-4xl font-semibold tracking-[-0.03em] sm:text-6xl">
           <motion.span
             initial={{ clipPath: "inset(0 100% 0 0)" }}
             whileInView={{ clipPath: "inset(0 0% 0 0)" }}
@@ -53,10 +53,10 @@ function ExecutionBlock({ exp, i }: { exp: Exp; i: number }) {
           >
             {exp.org}
           </motion.span>
-        </h3>
+        </h2>
         <Meta className="text-right">
           {exp.period}
-          <span className="px-2 text-border">/</span>
+          <span className="px-2 text-muted-foreground">/</span>
           <span className="text-signal">{exp.state}</span>
         </Meta>
       </div>

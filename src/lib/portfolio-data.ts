@@ -74,6 +74,11 @@ export type Project = {
   stack: string[];
   detail: string;
   url: string;
+  evidence?: {
+    type: "link" /* "link" tek varyant şu an; görsel/GIF desteği eklenirse "image" vb. genişletilecek */;
+    url: string;
+    label: string;
+  };
 };
 
 export const PROJECTS: Project[] = [

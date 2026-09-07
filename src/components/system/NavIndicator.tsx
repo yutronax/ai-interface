@@ -43,8 +43,14 @@ export function NavIndicator() {
               key={s.id}
               href={`#${s.id}`}
               aria-label={s.label}
-              className="h-3 w-3 py-1"
-              style={{ display: "block" }}
+              // The visible dash is a deliberately thin h-px sliver, but a
+              // 12x12px tap target (the old h-3 w-3) was below the 24-48px
+              // WCAG/Lighthouse minimum. A negative margin that shrank the
+              // visual footprint back down made adjacent 32px targets
+              // overlap instead (Lighthouse: "8px of clear space" - worse
+              // than the original), so this keeps the full 32x32px box
+              // in normal flow and accepts the slightly wider cluster.
+              className="flex h-8 w-8 items-center justify-center"
             >
               <span
                 className="block h-px w-3 transition-colors duration-300"

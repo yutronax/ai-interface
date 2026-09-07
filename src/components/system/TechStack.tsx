@@ -69,7 +69,7 @@ function Branch({
                 active ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              <span className={active ? "text-signal-dim" : "text-border"}>
+              <span className={active ? "text-signal-dim" : "text-muted-foreground"}>
                 {k === child.leaves.length - 1 ? "└──" : "├──"}
               </span>
               <span>{leaf}</span>

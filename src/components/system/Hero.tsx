@@ -95,7 +95,7 @@ export function Hero() {
                     transitionDelay: `${i * 120}ms`,
                   }}
                 >
-                  <span className="pr-3 text-border">◇</span>
+                  <span className="pr-3 text-muted-foreground">◇</span>
                   {d}
                 </span>
               ))}

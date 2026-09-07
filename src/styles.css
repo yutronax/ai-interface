@@ -68,7 +68,10 @@
   --ring: oklch(0.72 0.16 245);
   --grid: oklch(0.26 0.012 252);
   --signal: oklch(0.78 0.15 230);
-  --signal-dim: oklch(0.5 0.09 235);
+  /* Lightened from 0.5 to 0.62 (matches --muted-foreground) - the original
+     value failed WCAG AA (4.5:1) as body text against --background's 0.16
+     lightness, even though it read fine as a decorative accent at a glance. */
+  --signal-dim: oklch(0.62 0.1 235);
   --amber: oklch(0.8 0.13 80);
 }
 

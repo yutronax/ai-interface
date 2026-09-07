@@ -44,9 +44,9 @@ function Panel({ p }: { p: Project }) {
         >
           {p.stack.map((s) => (
             <span key={s}>
-              <span className="pr-1 text-border">[</span>
+              <span className="pr-1 text-muted-foreground">[</span>
               {s}
-              <span className="pl-1 text-border">]</span>
+              <span className="pl-1 text-muted-foreground">]</span>
             </span>
           ))}
         </motion.div>
@@ -76,10 +76,23 @@ function Panel({ p }: { p: Project }) {
           {"<>"} OPEN ON GITHUB
           <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
         </a>
+        {p.evidence && (
+          <a
+            href={p.evidence.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="rule-link mono group mt-3 inline-block text-xs tracking-[0.22em] text-foreground"
+          >
+            {p.evidence.label}
+            <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
+          </a>
+        )}
       </div>
     </div>
   );
 }
+
+export { Panel };
 
 export function Projects() {
   const ref = useRef<HTMLDivElement>(null);

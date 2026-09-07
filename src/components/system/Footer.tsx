@@ -71,36 +71,48 @@ export function Footer() {
 
         <Hairline />
 
-        <div className="relative flex flex-wrap items-center justify-between gap-6 py-8">
-          <div className="mono text-[10px] tracking-[0.22em] text-muted-foreground">
-            © {new Date().getFullYear()} {IDENTITY.name} · INTERFACE v1.0
-          </div>
-          <div className="flex gap-8">
+        {/* One dominant next step (LinkedIn) instead of three equal-weight
+            links - a recruiter/collaborator shouldn't have to pick which of
+            three identical-looking links is "the" way to reach out. GitHub
+            and mail stay reachable as smaller, secondary links. */}
+        <div className="relative flex flex-wrap items-center justify-between gap-8 py-10">
+          <a
+            href={IDENTITY.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mono inline-flex items-center gap-3 rounded-full bg-signal px-6 py-3 text-[11px] font-medium tracking-[0.18em] text-background transition-transform duration-200 hover:scale-[1.03]"
+          >
+            [in] CONNECT ON LINKEDIN
+            <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">
+              ↗
+            </span>
+          </a>
+
+          <div className="flex flex-wrap items-center gap-6">
             <a
               href={IDENTITY.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
+              className="rule-link group mono text-[11px] tracking-[0.22em] text-muted-foreground"
             >
               {"<>"} GITHUB
               <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
             </a>
             <a
-              href={IDENTITY.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
-            >
-              [in] LINKEDIN
-              <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
-            </a>
-            <a
               href={IDENTITY.email}
-              className="rule-link group mono text-[11px] tracking-[0.22em] text-foreground"
+              className="rule-link group mono text-[11px] tracking-[0.22em] text-muted-foreground"
             >
               [@] MAIL
               <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
             </a>
+          </div>
+        </div>
+
+        <Hairline />
+
+        <div className="py-6">
+          <div className="mono text-[10px] tracking-[0.22em] text-muted-foreground">
+            © {new Date().getFullYear()} {IDENTITY.name} · INTERFACE v1.0
           </div>
         </div>
       </div>

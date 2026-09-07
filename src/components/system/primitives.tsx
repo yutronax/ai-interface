@@ -123,7 +123,7 @@ export function SectionFrame({
         <div className="flex items-baseline justify-between gap-4 pt-24">
           <Meta>
             <span className="text-signal">{index}</span>
-            <span className="px-2 text-border">/</span>
+            <span className="px-2 text-muted-foreground">/</span>
             {title}
           </Meta>
           <Meta delay={0.1}>∷</Meta>

@@ -68,7 +68,7 @@ export function GitHubSection() {
               transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
               className="group grid grid-cols-[1fr_auto] items-center gap-4 border-b border-border py-4 transition-colors duration-300 hover:bg-surface sm:grid-cols-[2rem_1.4fr_1fr_0.6fr_0.8fr_0.8fr]"
             >
-              <span className="mono hidden text-[11px] text-border group-hover:text-signal sm:block">
+              <span className="mono hidden text-[11px] text-muted-foreground group-hover:text-signal sm:block">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span className="mono text-sm text-foreground transition-colors duration-300 group-hover:text-signal">
