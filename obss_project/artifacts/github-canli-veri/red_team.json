@@ -1,0 +1,74 @@
+{
+  "task": "github-canli-veri",
+  "reviewed_at": "2026-09-09T00:00:00Z",
+  "summary": "Implementasyon atdd.md'deki 6 AC'yi de doğru şekilde karşılıyor, testler ve gerçek dev-server doğrulaması bunu kanıtlıyor. Ancak iki gerçek risk var: fetch çağrısına hiç timeout/AbortController konmamış (SSR TTFB hedefini tehlikeye atabilir) ve TanStack Start loader'ı client-side navigasyonda da tetiklenip tarayıcıdan doğrudan GitHub API'sine gidebilir (server-side cache'i by-pass eder), bu SSR-only/rate-limit koruma niyetiyle çelişiyor.",
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "reliability",
+      "file": "src/lib/github-api.ts",
+      "issue": "fetch(\"https://api.github.com/users/yutronax/repos\") çağrısına hiçbir timeout/AbortController eklenmemiş. GitHub API yavaş yanıt verirse (ör. 10-30 sn), SSR loader bu süre boyunca bekler; try/catch sadece reddedilen (rejected) promise'i yakalar, asılı kalan isteği zaman aşımına uğratmaz.",
+      "better_approach": "AbortController + setTimeout(controller.abort(), ~2000ms) ile fetch'e signal eklenmeli, timeout durumu da catch bloğunda fallback'e düşürülmeli.",
+      "reason": "atdd.md performans hedefi 'SSR loader TTFB'ye 500ms'den fazla ek gecikme getirmemeli' diyor; timeout olmadan GitHub API'sindeki bir yavaşlama/askıda kalma bu hedefi doğrudan ihlal edebilir, hatta sayfanın hiç render olmamasına (hanging request) yol açabilir.",
+      "outcome": "fixed"
+    },
+    {
+      "severity": "medium",
+      "category": "architecture",
+      "file": "src/routes/index.tsx",
+      "issue": "loader, .server.ts uzantısı veya server-only bir sınır olmadan tanımlanmış. TanStack Router/Start'ta loader'lar sadece ilk SSR isteğinde değil, client-side navigasyonda (ör. kullanıcı başka bir route'a gidip geri '/' route'una dönerse) tarayıcıda da tekrar çalışabilir. Bu durumda fetch tarayıcıdan (client) doğrudan api.github.com'a gider, module-level server cache'i by-pass eder.",
+      "better_approach": "Eğer amaç gerçekten 'server tarafında rate-limit koruması' ise loader'ı bir .server.ts dosyasına taşımak veya en azından bu davranışın (client-side re-fetch olasılığı) bilinçli kabul edildiğini plan.md'ye not düşmek gerekirdi.",
+      "reason": "plan.md (satır 19) '.server.ts'e GEREK YOK çünkü client'ta çalışması sakıncalı değil' diyor — bu teknik olarak doğru (public API, sakıncalı veri yok) ama atdd.md'nin Risks bölümündeki 'rate-limit koruması' amacı, sadece module-level cache'in server tarafında paylaşıldığı senaryoda geçerli; SPA-mode client navigasyonunda cache paylaşılmaz, her tarayıcı sekmesi kendi cache'siz isteğini atar. Bu, dokümante edilmemiş gizli bir varsayım.",
+      "outcome": "skipped — kabul edilmiş risk: tek route'lu (sadece '/') bir sitede client-side re-navigasyon senaryosu pratikte oluşmuyor, .server.ts'e taşımak bu ölçekte CAVEMAN ilkesine aykırı ek karmaşıklık olurdu; kullanıcıya bildirildi"
+    },
+    {
+      "severity": "low",
+      "category": "risk",
+      "file": "src/lib/github-api.ts",
+      "issue": "getFallbackStats() cache'e YAZILMIYOR (satır 49, 57, 62, 81-82 — hepsi cache atamasını atlıyor). API sürekli başarısız olursa (ör. uzun süreli rate-limit/kesinti), her SSR isteği tekrar fetch dener ve tekrar başarısız olur.",
+      "better_approach": "Negatif/kısa TTL'li bir 'son deneme zamanı' cache'i eklenebilir (ör. başarısızlık sonrası 1 dakika boyunca tekrar denenmez) ki sürekli çöken bir API senaryosunda gereksiz outbound istek trafiği azalsın.",
+      "reason": "Kişisel portfolyo düşük trafikli olduğu için pratikte kritik değil (Receptor'ın sorduğu senaryo doğru teşhis edilmiş: zaten başarısız olan bir isteği tekrar denemek objektif olarak rate-limit'i KÖTÜLEŞTİRMEZ, sadece gereksiz gecikme/CPU tüketir) — bu yüzden severity low, ama YAGNI/CAVEMAN ilkesiyle de bilinçli olarak atlanmış olabilir, plan.md'de bu spesifik karar yazılı değil."
+    },
+    {
+      "severity": "low",
+      "category": "reliability",
+      "file": "src/lib/github-api.ts",
+      "issue": "Hiçbir hata durumunda console.error/log yok (atdd.md'nin Davranış Sözleşmesi tablosu 'Server log uyarısı (opsiyonel, sessiz)' diyor, yani bu opsiyonel — ama şu an tamamen sessiz, prod'da API'nin sürekli fallback'e düştüğünü fark etmek imkansız).",
+      "better_approach": "catch bloklarına console.warn(\"[github-api] fallback: <reason>\") eklenebilir; kullanıcıya hiçbir şey göstermez ama sunucu loglarında görünür olur.",
+      "reason": "atdd.md açıkça opsiyonel dediği için blocking değil, ama debugging/gözlemlenebilirlik açısından ucuz bir iyileştirme; ileride gerçek rate-limit sorunları sessizce fark edilmeden sürer."
+    }
+  ],
+  "strengths": [
+    "Tüm 6 AC (github-api.ts:25-30 docstring + fonksiyon gövdesi) doğru ve okunur şekilde karşılanmış; null/undefined stargazers_count için ?? 0 + typeof kontrolü (satır 69-70) gerçekten crash-proof.",
+    "getFallbackStats() (satır 89-93) REPOS'tan hesaplanıyor, tek yerden türetiliyor — hard-coded '04/46' string'i kod tabanından tamamen kaldırılmış, DRY ilkesine uygun.",
+    "AC-3 ile AC-2 ayrımı doğru: boş dizi (response.ok + Array.isArray + length 0) direkt stats olarak cache'lenip döndürülüyor (satır 67, 76), fallback'e hiç dokunmuyor — 'gerçek 0' ile 'fallback sayısı' karışmıyor.",
+    "Loader/component/lib katman ayrımı plan.md'ye tam uyumlu: fetch mantığı lib/github-api.ts'te, route sadece çağırıp prop geçiriyor (src/routes/index.tsx:14,37,48), component saf prop tüketicisi (GitHubSection.tsx:11-13) — mimari olarak temiz.",
+    "URL sabit/hardcoded (satır 41) olduğu için SSRF riski yok; kullanıcı girdisi hiçbir şekilde URL'e karışmıyor, injection riski değerlendirmesi doğrulandı."
+  ],
+  "risks": [
+    "Cold-start (Cloudflare Workers) senaryosunda module-level cache sıfırlanır — atdd.md'de bilinçli kabul edilmiş risk, düşük trafik nedeniyle kritik değil.",
+    "fetch'e timeout eklenmemesi, GitHub API'sinin geçici olarak çok yavaş yanıt verdiği bir senaryoda SSR TTFB'sini ciddi şekilde artırabilir (yukarıdaki finding).",
+    "Loader'ın client-side navigasyonda da çalışıp server cache'i by-pass etme ihtimali dokümante edilmemiş bir varsayım."
+  ],
+  "caveman_review": {
+    "complexity": "low",
+    "unnecessary_files": 0,
+    "unnecessary_helpers": 0,
+    "unnecessary_abstractions": 0
+  },
+  "scope_review": {
+    "matches_atdd": true,
+    "scope_expansion": false
+  },
+  "ready_to_commit": {
+    "atdd_satisfied": true,
+    "tests_passed": true,
+    "no_critical_findings": true,
+    "scope_respected": true,
+    "caveman_satisfied": true,
+    "security_acceptable": true,
+    "maintainability_acceptable": true,
+    "no_blocking_risks": true
+  },
+  "verdict": "approve-with-changes"
+}

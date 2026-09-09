@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import { fetchGitHubStats } from "@/lib/github-api";
 import { Hero } from "@/components/system/Hero";
 import { Identity } from "@/components/system/Identity";
 import { Experience } from "@/components/system/Experience";
@@ -10,6 +11,7 @@ import { Footer } from "@/components/system/Footer";
 import { NavIndicator } from "@/components/system/NavIndicator";
 
 export const Route = createFileRoute("/")({
+  loader: () => fetchGitHubStats(),
   head: () => ({
     meta: [
       { title: "Yusuf Çınar — AI Engineer" },
@@ -32,6 +34,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const stats = useLoaderData({ from: "/" });
+
   return (
     <main className="relative min-h-screen bg-background text-foreground">
       <NavIndicator />
@@ -41,7 +45,7 @@ function Index() {
       <Projects />
       <TechStack />
       <AiPipeline />
-      <GitHubSection />
+      <GitHubSection stats={stats} />
       <Footer />
     </main>
   );

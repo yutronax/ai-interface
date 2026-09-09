@@ -8,9 +8,11 @@ const LANG_COLOR: Record<string, string> = {
   Jupyter: "var(--color-signal-dim)",
 };
 
-export function GitHubSection() {
-  const totalStars = REPOS.reduce((n, r) => n + r.stars, 0);
+interface GitHubSectionProps {
+  stats: { repoCount: number; totalStars: number };
+}
 
+export function GitHubSection({ stats }: GitHubSectionProps) {
   return (
     <section id="github" className="relative w-full">
       <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
@@ -25,8 +27,8 @@ export function GitHubSection() {
         {/* dashboard summary strip */}
         <div className="mt-10 grid gap-px bg-border sm:grid-cols-3">
           {[
-            { k: "PUBLIC REPOS", v: String(REPOS.length).padStart(2, "0") },
-            { k: "TOTAL STARS", v: String(totalStars) },
+            { k: "PUBLIC REPOS", v: String(stats.repoCount).padStart(2, "0") },
+            { k: "TOTAL STARS", v: String(stats.totalStars) },
             { k: "PRIMARY LANG", v: "Python" },
           ].map((s, i) => (
             <motion.div
