@@ -90,6 +90,11 @@ export const PROJECTS: Project[] = [
     stack: ["PyTorch", "DeepLabV3+", "Rasterio", "OpenCV"],
     detail: "U-Net baseline replaced by DeepLabV3+ with ASPP; IoU +12% on held-out regions.",
     url: "https://github.com/yutronax",
+    evidence: {
+      type: "link",
+      url: "https://github.com/yutronax/staj-flood-detection",
+      label: "VIEW REPO",
+    },
   },
   {
     index: "02",
@@ -99,6 +104,11 @@ export const PROJECTS: Project[] = [
     stack: ["Transformers", "PyTorch", "CLIP", "VQA"],
     detail: "Patch-embedded image tokens fused with text tokens in a single transformer stack.",
     url: "https://github.com/yutronax",
+    evidence: {
+      type: "link",
+      url: "https://github.com/yutronax/ViLT-Modeli-ile-Gorsel-Soru-Yanitlama-Sistemi",
+      label: "VIEW REPO",
+    },
   },
   {
     index: "03",
@@ -108,6 +118,11 @@ export const PROJECTS: Project[] = [
     stack: ["React", "TypeScript", "LLM Agents", "FastAPI"],
     detail: "File-tree addressable agents; each window is a process with its own tool scope.",
     url: "https://github.com/yutronax",
+    evidence: {
+      type: "link",
+      url: "https://github.com/yutronax/windowsphereAI",
+      label: "VIEW REPO",
+    },
   },
   {
     index: "04",
@@ -117,6 +132,11 @@ export const PROJECTS: Project[] = [
     stack: ["scikit-learn", "NumPy", "Pandas", "Matplotlib"],
     detail: "Reproducible experiment runners with cross-validated metric reporting.",
     url: "https://github.com/yutronax",
+    evidence: {
+      type: "link",
+      url: "https://github.com/yutronax/Dataset_To_Trained_Model",
+      label: "VIEW REPO",
+    },
   },
 ];
 
