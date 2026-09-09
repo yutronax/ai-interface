@@ -1,0 +1,60 @@
+{
+  "task": "hero-pipeline-gercek-etkilesim",
+  "reviewed_at": "2026-09-09T00:00:00Z",
+  "summary": "Implementasyon gerçek diff ile doğrulandı; code_diff.md'nin iddiaları büyük ölçüde doğru. İki dürüstçe işaretlenmiş sınırlama (klavye Enter/Space eksikliği, click-outside'ın section-dışını kapsamaması) gerçek ve AC-3/AC-5'i kısmen ihlal ediyor; ayrıca AC-4 (reduced-motion) testlerinin vi.doMock kullanımı statik import nedeniyle muhtemelen gerçek davranışı hiç test etmiyor, bu code_diff.md'de belirtilmemiş yeni bir bulgu.",
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "reliability",
+      "file": "src/components/system/AiPipeline.tsx",
+      "issue": "Stage bileşeni role=\"button\" + tabIndex={0} taşıyor ama onKeyDown yok; klavye kullanıcısı Enter/Space ile kartı açamıyor, sadece Tab ile odaklanabiliyor.",
+      "better_approach": "onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }} eklenmeli.",
+      "reason": "WAI-ARIA APG button pattern'i role=\"button\" ilan eden her elemanın Enter/Space ile aktifleşmesini zorunlu kılar; atdd.md'nin persona'sı (recruiter/teknik değerlendirici) klavye kullanıcısı olabilir.",
+      "outcome": "fixed"
+    },
+    {
+      "severity": "medium",
+      "category": "correctness",
+      "file": "src/components/system/AiPipeline.tsx",
+      "issue": "handleClickOutside, containerRef.current.contains(e.target) false döndüğünde (tıklama section'ın TAMAMEN dışında) hiçbir şey yapmıyor — kart açık kalıyor. AC-3 'kart dışına tıklar' ifadesini section-dışı senaryoda karşılamıyor.",
+      "better_approach": "document click listener'da containerRef kontrolünü kaldırıp, sadece tıklanan elemanın en yakın [role='button'] atası yoksa (container içi/dışı fark etmeksizin) kapatacak şekilde yeniden yazılmalı.",
+      "reason": "atdd.md AC-3 [High] açıkça 'kart dışına tıklar' diyor, section sınırı belirtmiyor; gerçek kullanıcı sayfanın başka bir yerine tıklarsa kart açık kalır.",
+      "outcome": "fixed"
+    },
+    {
+      "severity": "low",
+      "category": "test-gap",
+      "file": "src/components/system/AiPipeline.test.tsx",
+      "issue": "AC-4 [High] describe bloğundaki 3 test vi.doMock('motion/react', ...) çağırıyor ama component dosyanın en üstünde statik import ile zaten yüklenmiş; bu testler muhtemelen gerçek reduced-motion davranışını hiç test etmiyor, sadece dosya seviyesindeki genel useReducedMotion:false mock'unu kullanıyor.",
+      "better_approach": "Reduced-motion testleri için component'i dynamic import() ile her testte yeniden yüklemek, ya da en üstteki vi.mock factory'sini parametrize edip mockReturnValueOnce ile değiştirmek gerekir.",
+      "reason": "code_diff.md AC-4'ü '3/3 pass' olarak raporluyor ama assertion'ların çoğu zaten aria-expanded toggle'ını kontrol ediyor (reduced-motion'dan bağımsız geçer), duration farkını doğrudan doğrulayan assertion yok.",
+      "outcome": "skipped — kabul edilmiş risk: kullanıcı onayıyla, düşük öncelik; test altyapısı sorunu, davranışı etkilemiyor, ayrı bir Saga takip maddesi olarak bırakıldı"
+    },
+    {
+      "severity": "low",
+      "category": "maintainability",
+      "file": "src/components/system/AiPipeline.tsx",
+      "issue": "closestStage tespiti string selector'a (\"div[role='button']\") dayanıyor — bileşenin DOM yapısı değişirse sessizce kırılır.",
+      "better_approach": "data-stage-card gibi anlamlı bir data-attribute kullanılabilir.",
+      "reason": "Şu an çalışıyor ama kırılgan bir bağ; düşük öncelik, davranışı etkilemiyor.",
+      "outcome": "skipped — düşük öncelik, kullanıcı onayıyla bırakıldı"
+    }
+  ],
+  "strengths": [
+    "Gerçek git diff, code_diff.md'nin dosya/satır iddialarıyla eşleşiyor (AnimatePresence bloğu, handleStageToggle, useReducedMotion kullanımı) — abartı/yalan rapor yok.",
+    "exampleContent verisi gerçekten bu reponun kendi geçmiş task'ından (github-canli-veri) alınmış, uydurma değil.",
+    "Progressive enhancement doğru uygulanmış: hasContent kontrolü olmadan chevron/expand alanı render edilmiyor, statik başlık/body her zaman görünür kalıyor (AC-6 karşılanıyor).",
+    "Mevcut scroll-pin mimarisine dokunulmamış, expanded içerik max-h-48 overflow-x-auto ile sınırlı — plan.md'nin risk azaltma stratejisi kod seviyesinde doğrulandı.",
+    "code_diff.md ve verify_report.md kalan sınırlamaları şeffafça red-team'e taşımış, gizlememiş."
+  ],
+  "risks": [
+    "Klavye erişilebilirliği eksikliği, gerçek bir teknik değerlendirici/recruiter'ın klavye ile göz atması durumunda özelliği tamamen kullanılamaz kılabilir.",
+    "Click-outside section-sınırlı davranışı, kullanıcı kartı açık bırakıp sayfanın başka bölümüne scroll ettiğinde kafa karıştırıcı bir deneyime yol açabilir.",
+    "AC-4 testlerinin gerçek davranışı doğrulamıyor olması ilerde reduced-motion regresyonunun fark edilmeden geçmesine izin verebilir."
+  ],
+  "caveman_review": {"complexity": "low", "unnecessary_files": 0, "unnecessary_helpers": 0, "unnecessary_abstractions": 0},
+  "scope_review": {"matches_atdd": true, "scope_expansion": false},
+  "ready_to_commit": {"atdd_satisfied": true, "tests_passed": true, "no_critical_findings": true, "scope_respected": true, "caveman_satisfied": true, "security_acceptable": true, "maintainability_acceptable": true, "no_blocking_risks": true},
+  "verdict": "approve-with-changes",
+  "note": "Orijinal red-team verdict'i atdd_satisfied:false idi (klavye + click-outside bulguları nedeniyle). Bu iki medium bulgu bu oturumda düzeltildi (bkz. outcome:fixed) ve commit öncesi bağımsız doğrulandı; bu dosya güncel/son durumu yansıtıyor."
+}

@@ -1,8 +1,16 @@
-import { motion, useTransform, useMotionValueEvent, type MotionValue } from "motion/react";
+import {
+  motion,
+  useTransform,
+  useMotionValueEvent,
+  useReducedMotion,
+  AnimatePresence,
+  type MotionValue,
+} from "motion/react";
 import { useSectionProgress } from "./use-section-progress";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { PIPELINE } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 const STAGE_STARTS = PIPELINE.map((_, i) => 0.12 + i * 0.28);
 
@@ -17,18 +25,35 @@ function Stage({
   style,
   active,
   onHover,
+  expanded,
+  onToggle,
 }: {
   stage: (typeof PIPELINE)[number];
   i: number;
   style: StageStyle;
   active: boolean;
   onHover: (i: number | null) => void;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
+  const reducedMotion = useReducedMotion();
+  const hasContent = !!stage.exampleContent;
+
   return (
     <div
       className="relative flex-1"
       onMouseEnter={() => onHover(i)}
       onMouseLeave={() => onHover(null)}
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
     >
       {/* node marker */}
       <div className="flex items-center gap-3">
@@ -55,6 +80,16 @@ function Stage({
         >
           {stage.stage}
         </span>
+        {hasContent && (
+          <ChevronDown
+            size={16}
+            data-testid="expand-chevron"
+            className={cn(
+              "transition-transform duration-300",
+              expanded ? "rotate-180" : "rotate-0",
+            )}
+          />
+        )}
       </div>
 
       <motion.div style={{ opacity: style.bodyOpacity, y: style.bodyY }} className="mt-6">
@@ -78,6 +113,31 @@ function Stage({
         >
           {active ? "ACTIVE" : "STANDBY"}
         </div>
+
+        {/* Expanded content */}
+        <AnimatePresence mode="wait">
+          {expanded && hasContent && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{
+                duration: reducedMotion ? 0 : 0.3,
+                ease: "easeInOut",
+              }}
+              className="overflow-hidden"
+            >
+              <div className="mono mt-4 space-y-2">
+                <div className="text-xs font-semibold text-signal">
+                  {stage.exampleContent.label}
+                </div>
+                <div className="bg-background/50 border border-border rounded px-3 py-2 text-[11px] leading-relaxed text-foreground/80 overflow-x-auto max-h-48">
+                  <code>{stage.exampleContent.code}</code>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
@@ -85,9 +145,11 @@ function Stage({
 
 export function AiPipeline() {
   const ref = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const scrollYProgress = useSectionProgress(ref, "pin");
   const [scrollStage, setScrollStage] = useState(-1);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     let s = -1;
@@ -96,6 +158,39 @@ export function AiPipeline() {
     });
     setScrollStage(s);
   });
+
+  // Close expanded card on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setExpandedIndex(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close expanded card on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (e.target instanceof Element) {
+        const closestStage = e.target.closest("div[role='button']");
+        if (!closestStage) {
+          setExpandedIndex(null);
+        }
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  const handleStageToggle = (index: number) => {
+    if (expandedIndex === index) {
+      setExpandedIndex(null);
+    } else {
+      setExpandedIndex(index);
+    }
+  };
 
   const seg1 = useTransform(scrollYProgress, [0.12, 0.4], ["0%", "100%"]);
   const seg2 = useTransform(scrollYProgress, [0.4, 0.68], ["0%", "100%"]);
@@ -113,9 +208,12 @@ export function AiPipeline() {
 
   return (
     <div id="pipeline" ref={ref} className="relative h-[220vh] w-full">
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+      <div ref={containerRef} className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
-          <motion.div style={{ opacity: headerOpacity }} className="flex items-baseline justify-between">
+          <motion.div
+            style={{ opacity: headerOpacity }}
+            className="flex items-baseline justify-between"
+          >
             <span className="label">
               <span className="text-signal">05</span> / AI-NATIVE PIPELINE
             </span>
@@ -142,6 +240,8 @@ export function AiPipeline() {
                   style={stageStyles[i]!}
                   active={i <= scrollStage || hovered === i}
                   onHover={setHovered}
+                  expanded={expandedIndex === i}
+                  onToggle={() => handleStageToggle(i)}
                 />
               ))}
             </div>

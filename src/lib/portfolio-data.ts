@@ -155,16 +155,28 @@ export const PIPELINE = [
     stage: "PLAN",
     tool: "Claude",
     body: "Specification, decomposition and red-team review before a single line is written.",
+    exampleContent: {
+      label: "Spec Snippet",
+      code: "AC-1 [Critical]: Given GitHub API'si başarıyla yanıt verir, When fetchGitHubStats() çağrılır, Then repoCount ve totalStars gerçek API verisinden hesaplanır",
+    },
   },
   {
     stage: "BUILD",
     tool: "Cursor",
     body: "In-editor agentic implementation against the accepted specification.",
+    exampleContent: {
+      label: "Code Snippet",
+      code: "const totalStars = repos.reduce((sum, repo) => { const stars = repo.stargazers_count ?? 0; return sum + (typeof stars === 'number' ? stars : 0); }, 0);",
+    },
   },
   {
     stage: "VERIFY",
     tool: "Codex",
     body: "Test-first execution, regression sweeps and acceptance-driven validation.",
+    exampleContent: {
+      label: "Test Output",
+      code: "bun run test — 42/42 test geçti (16 önceki task + 26 bu task)",
+    },
   },
 ];
 
