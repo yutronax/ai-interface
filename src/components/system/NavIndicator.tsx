@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
 import { SECTIONS } from "@/lib/portfolio-data";
+import { useTypewriter, Cursor } from "./use-typewriter";
+
+const HISTORY = SECTIONS.map((s) => ({
+  id: s.id,
+  label: s.label,
+  cmd: `grep -ri "${s.label.toLowerCase()}" ./system`,
+}));
 
 export function NavIndicator() {
   const [active, setActive] = useState(0);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [inputValue, setInputValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter(
-      (n): n is HTMLElement => Boolean(n),
+    const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter((n): n is HTMLElement =>
+      Boolean(n),
     );
     const io = new IntersectionObserver(
       (entries) => {
@@ -15,7 +25,10 @@ export function NavIndicator() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!visible) return;
         const idx = SECTIONS.findIndex((s) => s.id === visible.target.id);
-        if (idx >= 0) setActive(idx);
+        if (idx >= 0) {
+          setActive(idx);
+          setHistoryIndex(idx);
+        }
       },
       { threshold: [0.15, 0.4, 0.75], rootMargin: "-20% 0px -40% 0px" },
     );
@@ -23,44 +36,73 @@ export function NavIndicator() {
     return () => io.disconnect();
   }, []);
 
-  const current = SECTIONS[active];
+  const entry = HISTORY[historyIndex]!;
+  const command = useTypewriter(entry.cmd, 22, 80, true);
+
+  function cycle(delta: number) {
+    setError(null);
+    setHistoryIndex((i) => Math.min(HISTORY.length - 1, Math.max(0, i + delta)));
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      cycle(-1);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      cycle(1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (inputValue.trim().length === 0) {
+        window.location.hash = entry.id;
+        return;
+      }
+      setError(`grep: "${inputValue}": pattern not found — use ↑ / ↓ to browse matches`);
+      setInputValue("");
+    }
+  }
 
   return (
     <nav
-      aria-label="Section indicator"
-      className="pointer-events-none fixed bottom-5 right-5 z-50 select-none sm:bottom-8 sm:right-8"
+      aria-label="Section navigator (terminal)"
+      className="fixed bottom-5 right-5 z-50 select-none sm:bottom-8 sm:right-8"
     >
-      <div className="pointer-events-auto hair bg-background/80 px-3 py-2 backdrop-blur-[2px]">
-        <div className="mono text-[10px] tracking-[0.22em] text-signal">
+      <div className="hair w-[min(78vw,300px)] bg-background/90 px-3 py-2.5 backdrop-blur-[2px]">
+        <div className="mono text-[10px] tracking-[0.18em] text-signal">
           {String(active + 1).padStart(2, "0")} / {String(SECTIONS.length).padStart(2, "0")}
         </div>
-        <div className="mono mt-0.5 text-[10px] tracking-[0.22em] text-foreground">
-          {current?.label}
+
+        <a
+          href={`#${entry.id}`}
+          className="mono mt-1.5 block truncate text-[11px] tracking-[0.05em] text-foreground"
+          aria-label={`Go to ${entry.label}`}
+        >
+          <span className="text-muted-foreground">$ </span>
+          {command.typed}
+          {!command.done && <Cursor />}
+        </a>
+        <div
+          className="mono mt-0.5 text-[10px] tracking-[0.1em] text-signal transition-opacity duration-300"
+          style={{ opacity: command.done ? 1 : 0 }}
+        >
+          → #{entry.id} <span className="text-muted-foreground">({entry.label})</span>
         </div>
-        <div className="mt-2 flex gap-1">
-          {SECTIONS.map((s, i) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              aria-label={s.label}
-              // The visible dash is a deliberately thin h-px sliver, but a
-              // 12x12px tap target (the old h-3 w-3) was below the 24-48px
-              // WCAG/Lighthouse minimum. A negative margin that shrank the
-              // visual footprint back down made adjacent 32px targets
-              // overlap instead (Lighthouse: "8px of clear space" - worse
-              // than the original), so this keeps the full 32x32px box
-              // in normal flow and accepts the slightly wider cluster.
-              className="flex h-8 w-8 items-center justify-center"
-            >
-              <span
-                className="block h-px w-3 transition-colors duration-300"
-                style={{
-                  backgroundColor: i <= active ? "var(--color-signal)" : "var(--color-border)",
-                }}
-              />
-            </a>
-          ))}
+
+        <div className="mono mt-2 flex items-center gap-1 border-t border-border pt-2 text-[11px] text-muted-foreground">
+          <span className="text-signal">$</span>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="↑ / ↓ history, ↵ go"
+            aria-label="Terminal command (history navigation only)"
+            className="mono w-full bg-transparent text-[11px] text-foreground outline-none placeholder:text-muted-foreground/60"
+          />
         </div>
+        {error && (
+          <div className="mono mt-1 text-[10px] tracking-[0.05em] text-signal">{error}</div>
+        )}
       </div>
     </nav>
   );

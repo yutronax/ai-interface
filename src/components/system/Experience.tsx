@@ -1,8 +1,16 @@
-import { motion, useScroll, useTransform, useSpring, useMotionValue, useMotionValueEvent } from "motion/react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValue,
+  useMotionValueEvent,
+} from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { EXPERIENCES, type Experience as Exp } from "@/lib/portfolio-data";
 import { Hairline, Meta } from "./primitives";
 import { SatelliteViz } from "./SatelliteViz";
+import { TerminalWindow } from "./TerminalWindow";
 
 function Counter({ value }: { value: string }) {
   const num = Number(value.replace(/[^\d.]/g, ""));
@@ -144,19 +152,21 @@ function ExecutionBlock({ exp, i }: { exp: Exp; i: number }) {
 
 export function Experience() {
   return (
-    <section id="experience" className="relative w-full">
-      <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
-        <div className="flex items-baseline justify-between pt-28">
-          <Meta>
-            <span className="text-signal">02</span> / EXPERIENCE
-          </Meta>
-          <Meta delay={0.1}>{EXPERIENCES.length} PROCESSES</Meta>
+    <section id="experience" className="relative w-full px-3 pt-28 sm:px-6">
+      <TerminalWindow title="yusuf@system — experience" className="mx-auto w-full max-w-[1400px]">
+        <div className="px-5 py-6 sm:px-10 sm:py-8">
+          <div className="flex items-baseline justify-between">
+            <Meta>
+              <span className="text-signal">02</span> / EXPERIENCE
+            </Meta>
+            <Meta delay={0.1}>{EXPERIENCES.length} PROCESSES</Meta>
+          </div>
+          <Hairline className="mt-3" />
+          {EXPERIENCES.map((e, i) => (
+            <ExecutionBlock key={e.id} exp={e} i={i} />
+          ))}
         </div>
-        <Hairline className="mt-3" />
-        {EXPERIENCES.map((e, i) => (
-          <ExecutionBlock key={e.id} exp={e} i={i} />
-        ))}
-      </div>
+      </TerminalWindow>
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { motion, useTransform, type MotionValue } from "motion/react";
 import { useSectionProgress } from "./use-section-progress";
 import { useRef } from "react";
 import { IDENTITY } from "@/lib/portfolio-data";
+import { TerminalWindow } from "./TerminalWindow";
 
 type Layer = {
   key: string;
@@ -55,33 +56,35 @@ export function Identity() {
 
   return (
     <div id="identity" ref={ref} className="relative h-[180vh] w-full">
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
-          <div className="flex items-baseline justify-between">
-            <motion.span style={{ opacity: indexOpacity }} className="label">
-              <span className="text-signal">01</span> / IDENTITY
-            </motion.span>
-            <motion.span style={{ opacity: indexOpacity }} className="label">
-              LAYER ALIGNMENT
-            </motion.span>
-          </div>
-          <motion.div style={{ width: frameWidth }} className="mt-3 h-px bg-signal" />
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden p-3 sm:p-6">
+        <TerminalWindow title="yusuf@system — identity" className="mx-auto w-full max-w-[1400px]">
+          <div className="px-5 py-6 sm:px-10 sm:py-8">
+            <div className="flex items-baseline justify-between">
+              <motion.span style={{ opacity: indexOpacity }} className="label">
+                <span className="text-signal">01</span> / IDENTITY
+              </motion.span>
+              <motion.span style={{ opacity: indexOpacity }} className="label">
+                LAYER ALIGNMENT
+              </motion.span>
+            </div>
+            <motion.div style={{ width: frameWidth }} className="mt-3 h-px bg-signal" />
 
-          <div className="mt-8">
-            {LAYERS.map((l, i) => (
-              <LayerRow key={l.key} layer={l} style={layerStyles[i]!} />
-            ))}
-          </div>
+            <div className="mt-8">
+              {LAYERS.map((l, i) => (
+                <LayerRow key={l.key} layer={l} style={layerStyles[i]!} />
+              ))}
+            </div>
 
-          <div className="mono mt-8 max-w-xl text-xs leading-relaxed text-muted-foreground">
-            <span className="text-signal-dim">/ / </span>
-            Systems that plan, perceive and act. Research-grade computer vision, production NLP
-            pipelines and agentic development workflows.
-            <span className="pl-2 text-muted-foreground">
-              [{IDENTITY.domains.length} ACTIVE DOMAINS]
-            </span>
+            <div className="mono mt-8 max-w-xl text-xs leading-relaxed text-muted-foreground">
+              <span className="text-signal-dim">/ / </span>
+              Systems that plan, perceive and act. Research-grade computer vision, production NLP
+              pipelines and agentic development workflows.
+              <span className="pl-2 text-muted-foreground">
+                [{IDENTITY.domains.length} ACTIVE DOMAINS]
+              </span>
+            </div>
           </div>
-        </div>
+        </TerminalWindow>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { useRef, useState, useEffect } from "react";
 import { PIPELINE } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import { TerminalWindow } from "./TerminalWindow";
 
 const STAGE_STARTS = PIPELINE.map((_, i) => 0.12 + i * 0.28);
 
@@ -208,53 +209,58 @@ export function AiPipeline() {
 
   return (
     <div id="pipeline" ref={ref} className="relative h-[220vh] w-full">
-      <div ref={containerRef} className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
-          <motion.div
-            style={{ opacity: headerOpacity }}
-            className="flex items-baseline justify-between"
-          >
-            <span className="label">
-              <span className="text-signal">05</span> / AI-NATIVE PIPELINE
-            </span>
-            <span className="label">PLAN → BUILD → VERIFY</span>
-          </motion.div>
-          <motion.div style={{ opacity: headerOpacity }} className="mt-3 h-px w-full bg-border" />
+      <div
+        ref={containerRef}
+        className="sticky top-0 flex h-screen items-center overflow-hidden p-3 sm:p-6"
+      >
+        <TerminalWindow title="yusuf@system — pipeline" className="mx-auto w-full max-w-[1400px]">
+          <div className="px-5 py-6 sm:px-10 sm:py-8">
+            <motion.div
+              style={{ opacity: headerOpacity }}
+              className="flex items-baseline justify-between"
+            >
+              <span className="label">
+                <span className="text-signal">05</span> / AI-NATIVE PIPELINE
+              </span>
+              <span className="label">PLAN → BUILD → VERIFY</span>
+            </motion.div>
+            <motion.div style={{ opacity: headerOpacity }} className="mt-3 h-px w-full bg-border" />
 
-          <div className="relative mt-16 sm:mt-20">
-            {/* connector line */}
-            <div aria-hidden className="absolute left-0 right-0 top-[18px] hidden md:block">
-              <div className="h-px w-full bg-border" />
-              <div className="absolute inset-y-0 left-0 flex w-full">
-                <motion.div style={{ width: seg1 }} className="h-px bg-signal" />
-                <motion.div style={{ width: seg2 }} className="h-px bg-signal" />
+            <div className="relative mt-16 sm:mt-20">
+              {/* connector line */}
+              <div aria-hidden className="absolute left-0 right-0 top-[18px] hidden md:block">
+                <div className="h-px w-full bg-border" />
+                <div className="absolute inset-y-0 left-0 flex w-full">
+                  <motion.div style={{ width: seg1 }} className="h-px bg-signal" />
+                  <motion.div style={{ width: seg2 }} className="h-px bg-signal" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-14 md:flex-row md:gap-8">
+                {PIPELINE.map((s, i) => (
+                  <Stage
+                    key={s.stage}
+                    stage={s}
+                    i={i}
+                    style={stageStyles[i]!}
+                    active={i <= scrollStage || hovered === i}
+                    onHover={setHovered}
+                    expanded={expandedIndex === i}
+                    onToggle={() => handleStageToggle(i)}
+                  />
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-col gap-14 md:flex-row md:gap-8">
-              {PIPELINE.map((s, i) => (
-                <Stage
-                  key={s.stage}
-                  stage={s}
-                  i={i}
-                  style={stageStyles[i]!}
-                  active={i <= scrollStage || hovered === i}
-                  onHover={setHovered}
-                  expanded={expandedIndex === i}
-                  onToggle={() => handleStageToggle(i)}
-                />
-              ))}
-            </div>
+            <motion.div
+              style={{ opacity: headerOpacity }}
+              className="mono mt-16 text-[11px] tracking-[0.22em] text-muted-foreground"
+            >
+              <span className="text-signal-dim">/ / </span>
+              SPECIFICATION BEFORE CODE. VERIFICATION AFTER.
+            </motion.div>
           </div>
-
-          <motion.div
-            style={{ opacity: headerOpacity }}
-            className="mono mt-16 text-[11px] tracking-[0.22em] text-muted-foreground"
-          >
-            <span className="text-signal-dim">/ / </span>
-            SPECIFICATION BEFORE CODE. VERIFICATION AFTER.
-          </motion.div>
-        </div>
+        </TerminalWindow>
       </div>
     </div>
   );

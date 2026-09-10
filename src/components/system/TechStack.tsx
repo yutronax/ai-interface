@@ -3,6 +3,7 @@ import { useSectionProgress } from "./use-section-progress";
 import { useRef, useState } from "react";
 import { TECH_GRAPH } from "@/lib/portfolio-data";
 import { cn } from "@/lib/utils";
+import { TerminalWindow } from "./TerminalWindow";
 
 type BranchStyle = {
   lineScale: MotionValue<number>;
@@ -44,10 +45,7 @@ function Branch({
         />
       </div>
 
-      <motion.div
-        style={{ opacity: style.bodyOpacity, x: style.bodyX }}
-        className="min-w-0 flex-1"
-      >
+      <motion.div style={{ opacity: style.bodyOpacity, x: style.bodyX }} className="min-w-0 flex-1">
         <div
           className={cn(
             "mono text-xl font-medium tracking-[0.06em] transition-colors duration-300 sm:text-2xl",
@@ -106,52 +104,59 @@ export function TechStack() {
 
   return (
     <div id="stack" ref={ref} className="relative h-[260vh] w-full">
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-10">
-          <motion.div style={{ opacity: headerOpacity }} className="flex items-baseline justify-between">
-            <span className="label">
-              <span className="text-signal">04</span> / TECH STACK
-            </span>
-            <span className="label">
-              {selected ? `FOCUS ⌁ ${selected.toUpperCase()}` : "DEPENDENCY GRAPH"}
-            </span>
-          </motion.div>
-          <motion.div style={{ opacity: headerOpacity }} className="mt-3 h-px w-full bg-border" />
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden p-3 sm:p-6">
+        <TerminalWindow title="yusuf@system — stack" className="mx-auto w-full max-w-[1400px]">
+          <div className="px-5 py-6 sm:px-10 sm:py-8">
+            <motion.div
+              style={{ opacity: headerOpacity }}
+              className="flex items-baseline justify-between"
+            >
+              <span className="label">
+                <span className="text-signal">04</span> / TECH STACK
+              </span>
+              <span className="label">
+                {selected ? `FOCUS ⌁ ${selected.toUpperCase()}` : "DEPENDENCY GRAPH"}
+              </span>
+            </motion.div>
+            <motion.div style={{ opacity: headerOpacity }} className="mt-3 h-px w-full bg-border" />
 
-          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-            {/* root node */}
-            <div className="relative">
-              <motion.div style={{ scale: rootScale, opacity: rootOpacity, transformOrigin: "left center" }}>
-                <div className="label">ROOT RUNTIME</div>
-                <div className="mt-3 text-6xl font-semibold tracking-[-0.04em] sm:text-7xl lg:text-8xl">
-                  {TECH_GRAPH.root}
-                </div>
-                <div className="mono mt-4 text-[11px] tracking-[0.22em] text-muted-foreground">
-                  [{TECH_GRAPH.children.length} MODULES · {leafCount} CAPABILITIES]
-                </div>
-              </motion.div>
-              {/* trunk */}
-              <motion.span
-                aria-hidden
-                style={{ scaleY: trunkScale, transformOrigin: "top" }}
-                className="absolute left-full top-6 hidden h-[80%] w-px bg-border lg:block"
-              />
-            </div>
-
-            {/* branches */}
-            <div className="space-y-8">
-              {TECH_GRAPH.children.map((c, i) => (
-                <Branch
-                  key={c.name}
-                  child={c}
-                  style={branchStyles[i]!}
-                  active={selected === c.name}
-                  onSelect={setSelected}
+            <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+              {/* root node */}
+              <div className="relative">
+                <motion.div
+                  style={{ scale: rootScale, opacity: rootOpacity, transformOrigin: "left center" }}
+                >
+                  <div className="label">ROOT RUNTIME</div>
+                  <div className="mt-3 text-6xl font-semibold tracking-[-0.04em] sm:text-7xl lg:text-8xl">
+                    {TECH_GRAPH.root}
+                  </div>
+                  <div className="mono mt-4 text-[11px] tracking-[0.22em] text-muted-foreground">
+                    [{TECH_GRAPH.children.length} MODULES · {leafCount} CAPABILITIES]
+                  </div>
+                </motion.div>
+                {/* trunk */}
+                <motion.span
+                  aria-hidden
+                  style={{ scaleY: trunkScale, transformOrigin: "top" }}
+                  className="absolute left-full top-6 hidden h-[80%] w-px bg-border lg:block"
                 />
-              ))}
+              </div>
+
+              {/* branches */}
+              <div className="space-y-8">
+                {TECH_GRAPH.children.map((c, i) => (
+                  <Branch
+                    key={c.name}
+                    child={c}
+                    style={branchStyles[i]!}
+                    active={selected === c.name}
+                    onSelect={setSelected}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </TerminalWindow>
       </div>
     </div>
   );

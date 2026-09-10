@@ -3,6 +3,7 @@ import { useSectionProgress } from "./use-section-progress";
 import { useEffect, useRef, useState } from "react";
 import { PROJECTS, type Project } from "@/lib/portfolio-data";
 import { ProjectVisual } from "./ProjectVisual";
+import { TerminalWindow } from "./TerminalWindow";
 
 function Panel({ p }: { p: Project }) {
   return (
@@ -118,22 +119,28 @@ export function Projects() {
 
   return (
     <div id="projects" ref={ref} className="relative h-[420vh] w-full">
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-        <div className="mx-auto flex w-full max-w-[1400px] items-baseline justify-between px-5 sm:px-10">
-          <span className="label">
-            <span className="text-signal">03</span> / PROJECTS
-          </span>
-          <span className="label">HORIZONTAL TRANSPORT △</span>
-        </div>
-        <div className="mx-auto mt-3 h-px w-full max-w-[1400px] bg-border px-5 sm:px-10">
-          <motion.div style={{ width: progress }} className="h-px bg-signal" />
-        </div>
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden p-3 sm:p-6">
+        <TerminalWindow
+          title="yusuf@system — projects"
+          className="mx-auto h-full w-full max-w-[1400px]"
+          bodyClassName="flex flex-col justify-center overflow-hidden"
+        >
+          <div className="mx-auto flex w-full items-baseline justify-between px-5 pt-6 sm:px-10 sm:pt-8">
+            <span className="label">
+              <span className="text-signal">03</span> / PROJECTS
+            </span>
+            <span className="label">HORIZONTAL TRANSPORT △</span>
+          </div>
+          <div className="mx-auto mt-3 h-px w-full bg-border px-5 sm:px-10">
+            <motion.div style={{ width: progress }} className="h-px bg-signal" />
+          </div>
 
-        <motion.div ref={trackRef} style={{ x }} className="mt-6 flex gap-6 pl-5 sm:pl-10">
-          {PROJECTS.map((p) => (
-            <Panel key={p.name} p={p} />
-          ))}
-        </motion.div>
+          <motion.div ref={trackRef} style={{ x }} className="mt-6 flex gap-6 pl-5 sm:pl-10">
+            {PROJECTS.map((p) => (
+              <Panel key={p.name} p={p} />
+            ))}
+          </motion.div>
+        </TerminalWindow>
       </div>
     </div>
   );
