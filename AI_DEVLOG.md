@@ -2,6 +2,18 @@
 
 Bilinçli kapsam/mimari kararları ve pipeline sırasında bulunan gerçek zorlukların kaydı. Pipeline adımlarının kendi artifact dosyalarından (`obss_project/artifacts/<task-slug>/`) aktarılır.
 
+## lcp-hero-boot-font-fix (2026-09-14)
+
+**Karar (kaynak: plan.md):** Self-host font yerine Google Fonts korunup stylesheet'i `preload+async` pattern'ine çevrildi — atdd.md self-host'u opsiyonel işaretlemişti, preconnect zaten mevcuttu, async pattern daha az dosya/lisans riskiyle AC-4/AC-6'yı karşılıyor.
+
+**Sapma (kaynak: code_diff.md → red_team.json):** plan.md'nin Kararlar #2'si (boot animasyonunun basit fade/clip-path CSS reveal'ına taşınması) implementasyonda uygulanmadı — h1 artık hiçbir görsel reveal olmadan direkt statik render ediliyor. AC'ler harfiyen karşılanıyor (h1 mount anında tam metin) ama portfolyonun "terminal boot" görsel kimliği h1 üzerinde tamamen kayboldu. Red-team bunu `medium` şiddetinde bir scope bulgusu olarak işaretledi — gerekirse ayrı bir polish görevi olarak ele alınabilir.
+
+**Bulunan ve düzeltilen gerçek sorunlar (kaynak: verify sırasında canlı tespit):** code-copilot dispatch'i sonrası test dosyasında 2 buggy assertion vardı (biri matematiksel olarak her zaman false dönen `not.toContain(fullName.slice(0,-1))`, diğeri testing-library'nin whitespace normalize etmesi yüzünden yanlış regex) — implementasyon doğruydu, testler hatalıydı, ayrı Haiku dispatch'leriyle düzeltildi. Ayrıca prettier format ve bir TS tip hatası (`Element` vs `HTMLElement`) verify aşamasında bulunup düzeltildi.
+
+**Ölçüm sonucu (kaynak: verify_report.md):** Gerçek prod build + gerçek Lighthouse: LCP 941ms (önceki ~5-6s'den), Element Render Delay 215ms (önceki ~1489ms'den, hedef <200ms'e çok yakın).
+
+**Açık madde (kaynak: verify_report.md):** AC-5 (mobile throttle) ve AC-6 (font offline fallback) canlı doğrulanmadı — sadece desktop preset Lighthouse ve kod incelemesiyle değerlendirildi.
+
 ## uptime-izleme-pm2-recovery (2026-09-14)
 
 **Karar (kaynak: plan.md):** Ayrı bir `/health` HTTP endpoint'i eklenmedi — TanStack Start'ın server-route API'si bu repoda hiç kullanılmamıştı (versiyon doğrulanmadı), risk/fayda oranı düşüktü. Mevcut `/` zaten SSR ile 200 döndüğü sürece uptime-check hedefi olarak yeterli.

@@ -93,10 +93,7 @@ export function Hero() {
                 style={{ scale: nameScale, y: nameY, x: nameX, transformOrigin: "left bottom" }}
                 className="text-[11vw] font-semibold leading-[0.85] tracking-[-0.04em] sm:text-[9vw]"
               >
-                <span className="block">
-                  {name.typed}
-                  {!name.done && bootDone && <Cursor />}
-                </span>
+                <span className="block">{IDENTITY.name}</span>
               </motion.h1>
 
               <motion.div

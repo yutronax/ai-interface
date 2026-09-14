@@ -1,0 +1,72 @@
+{
+  "task": "lcp-hero-boot-font-fix",
+  "reviewed_at": "2026-09-14T21:10:00Z",
+  "summary": "AC-1/AC-3'ün çekirdek düzeltmesi (h1'in typewriter state'inden ayrıştırılması) doğru ve minimal şekilde uygulanmış, gerçek Lighthouse ölçümüyle doğrulanmış (LCP 941ms, ERD 215ms, önceki ~5-6s/~1489ms'den). Ancak plan.md'nin Kararlar #2'si (boot animasyonu için CSS reveal) sessizce uygulanmadı, AC-5 (mobile throttle) ve AC-6 (offline font fallback) verify_report.md'nin kendi itirafıyla canlı doğrulanmadı, ve inline font-loading script'i test edilmemiş küçük bir dayanıklılık boşluğu taşıyor.",
+  "findings": [
+    {
+      "severity": "medium",
+      "category": "scope",
+      "file": "obss_project/artifacts/lcp-hero-boot-font-fix/plan.md",
+      "issue": "plan.md Kararlar #2 açıkça 'basit fade/clip-path reveal' taahhüt ediyordu. Yayınlanan kod (Hero.tsx satır 96) h1'i tamamen statik/animasyonsuz bıraktı — hiçbir reveal yok. Bu, numaralandırılmış bir plan kararından sessiz bir sapma, sadece belirsiz bir AC yorumu değil.",
+      "better_approach": "Ya h1'in span'ına hafif bir CSS opacity/clip-path reveal ekle (mount'ta başlayan, JS state'inden bağımsız sabit süreli bir animasyon) ya da plan.md'yi bu kararın tersine çevrildiğini gerekçesiyle resmen güncelle — sadece code_diff.md'de bir 'Not' olarak bırakma.",
+      "reason": "Plan dokümanları code-copilot'un ne inşa edeceğinin sözleşmesi olmalı; belirtilen bir kararı sessizce uygulamamak (AC harfiyen karşılansa bile) ATDD zincirinin izlenebilirliğini zedeliyor. Bu bir portfolio hero'su — görsel kimlik önemli, bu kullanıcı onayı gerektirebilecek bir ürün kararı."
+    },
+    {
+      "severity": "medium",
+      "category": "test-gap",
+      "file": "obss_project/artifacts/lcp-hero-boot-font-fix/verify_report.md",
+      "issue": "AC-5 (mobile 4x CPU + slow 4G throttle, ERD <200ms) sadece Lighthouse desktop preset ile ölçüldü (215ms, throttle'sız halde bile hedefin hafif üzerinde). AC-6 (font 404/offline fallback) hiç canlı test edilmedi, sadece kodda `noscript` varlığı incelendi.",
+      "better_approach": "`npx lighthouse --preset=mobile` (veya throttling-method=simulate + mobile CPU/network profili) ile gerçek bir koşum yap; fonts.googleapis.com'u DevTools'ta bloklayarak bir offline/fallback testi yap.",
+      "reason": "atdd.md açıkça 'Lighthouse mobile, simulated throttle' istiyor (AC-2/AC-5) ve AC-6 için canlı bir fallback senaryosu tanımlıyor (Davranış Sözleşmesi Row 2/3). Desktop-only sayılar (zaten 200ms sınırının üzerinde olan 215ms) daha zor olan mobile durumunu doğrulamıyor."
+    },
+    {
+      "severity": "low",
+      "category": "reliability",
+      "file": "src/routes/__root.tsx",
+      "issue": "Google Fonts stylesheet'ini enjekte eden inline `<script dangerouslySetInnerHTML>`'nin `onerror`/`onload` işleme mekanizması ve CSP nonce'u yok. Site ileride sıkı bir Content-Security-Policy (`script-src 'self'`) eklerse bu inline script — ve dolayısıyla tüm font yükleme — sessizce kırılır.",
+      "better_approach": "`document.createElement` yerine `<link rel=preload as=style onload=\"this.rel='stylesheet'\">` (saf HTML, inline-JS'siz loadCSS deseni) kullanmayı düşün.",
+      "reason": "Gelecekteki bir CSP sertleştirme çabasının bu performans düzeltmesini sessizce geri almasını önler; ayrıca bilinen bir deklaratif desen için gereksiz bir inline-script bağımlılığını kaldırır."
+    },
+    {
+      "severity": "low",
+      "category": "readability",
+      "file": "src/components/system/Hero.tsx",
+      "issue": "`name` (typewriter hook instance) artık sadece `name.done` için kullanılıyor (`step` hesaplamasında), `name.typed` kullanılmıyor ama bu niyet kodda işaretlenmemiş.",
+      "better_approach": "`const name = useTypewriter(...)` satırının yanına 'name.typed kasıtlı olarak kullanılmıyor — h1 LCP için IDENTITY.name'i doğrudan render ediyor, sadece name.done aşağı-katman reveal zamanlamasını tetikliyor' notunu ekle.",
+      "reason": "Gelecekteki bir katkıcının h1'i tekrar `name.typed`'e bağlayıp orijinal LCP hatasını yeniden getirmesini önler — LCP-kritik invariant'ı doğrudan dosyada belgelemek, bu görevin artifact'lerinin daha sonra okunmasına güvenmekten daha ucuz."
+    }
+  ],
+  "strengths": [
+    "Hero.tsx satır 96: h1 artık `{name.typed}` yerine doğrudan `{IDENTITY.name}` render ediyor — LCP elementini typewriter/boot-interval JS state zincirinden doğru şekilde ayrıştırıyor, AC-1/AC-3 için minimal ve doğru düzeltme, gerçek Lighthouse sayılarıyla doğrulanmış (LCP 941ms vs önceki ~5-6s).",
+    "__root.tsx: preconnect linkleri korundu, stylesheet render-blocking `<link rel=stylesheet>`'ten `rel=preload as=style` + async enjeksiyon + `<noscript>` fallback'e çevrildi — yeni saldırı yüzeyi eklemeyen standart, güvenli bir non-blocking font deseni (statik sabit URL, kullanıcı girdisi script'e ulaşmıyor).",
+    "Hero.test.tsx: testler h1.textContent'i render'dan hemen sonra (act()/timer ilerletme olmadan) doğru şekilde assert ediyor — LCP elementinin effect/interval'lara bağımlı olmadığını kanıtlamanın doğru yolu; fake-timer 'kısmi başarı' testi atdd.md'nin Davranış Sözleşmesi Row 5'ini doğrudan kodluyor.",
+    "security-scan (secrets/node_deps) 3 değişen dosyada PASS raporladı, hiçbir kullanıcı girdisi/auth/PII bu dosyalara dokunmuyor (atdd.md'de threat_model: not-applicable doğru şekilde işaretlenmiş)."
+  ],
+  "risks": [
+    "AC-5 mobile-throttle ve AC-6 offline-font fallback canlı doğrulanmadı; gerçek bir mobile Lighthouse koşumunda ERD 200ms'i aşabilir (şu an throttle'sız halde bile 215ms) ve görev yeniden açılması gerekebilir.",
+    "plan.md Kararı #2'nin (CSS reveal) atlanması, portfolyonun 'terminal boot' görsel kimliğinin h1 üzerinde tamamen kaybolduğu anlamına geliyor (azalmadı, tamamen kalktı) — bu, red-team notundan önce açık kullanıcı onayı gerektirebilecek bir ürün/tasarım kararı.",
+    "__root.tsx'teki inline script font-yükleme deseni CSP'yi hesaba katmıyor; bugün düşük risk ama gelecekteki CSP sertleştirmesinde bunu yakalayacak hiçbir test yok."
+  ],
+  "caveman_review": {
+    "complexity": "low",
+    "unnecessary_files": 0,
+    "unnecessary_helpers": 0,
+    "unnecessary_abstractions": 0
+  },
+  "scope_review": {
+    "matches_atdd": true,
+    "scope_expansion": false
+  },
+  "ready_to_commit": {
+    "atdd_satisfied": true,
+    "tests_passed": true,
+    "no_critical_findings": true,
+    "scope_respected": true,
+    "caveman_satisfied": true,
+    "security_acceptable": true,
+    "maintainability_acceptable": true,
+    "no_blocking_risks": true
+  },
+  "verdict": "approve-with-changes",
+  "schema_note": "obss-red-team subagent'ı kendi OBSS şemasına (alternative_approach/approved_points alanları) yakın bir çıktı döndürdü; CLI ajanı bunu ATDD şemasına (findings/strengths/risks) elle çevirdi. approved_points -> strengths olarak taşındı; alternative_approach (use-typewriter hook'unu revealOnly modu ile genelleştirme önerisi) bir öneri olarak burada not düşülüyor ama findings listesine kritik/blocking bir bulgu olarak eklenmedi çünkü mevcut scope'un (Hero.tsx özel durumu) dışında, gelecekteki bir refactor önerisi niteliğinde."
+}
