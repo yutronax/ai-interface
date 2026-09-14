@@ -18,6 +18,7 @@ module.exports = {
       // Environment variables (optional — can be overridden at runtime)
       env: {
         NODE_ENV: "production",
+        PORT: 8081,
       },
     },
   ],
