@@ -55,15 +55,21 @@ Her madde bir kaynağa/örneğe bağlı. Kaynaksız/jenerik tavsiye yazılmadı.
 
 ## Durum Özeti — ne zaten karşılanıyor, ne eksik
 
+_Saga #387 kapsamında yeniden tarandı (2026-09-14): aşağıdaki 5 madde, kaynak kodda
+doğrulanarak (görüş değil, dosya okuması ile) hepsi karşılanmış bulundu._
+
 | Kategori | Durum |
 |---|---|
-| Navigasyon/CTA — dokunma hedefi | ✅ Karşılanıyor (bu oturumda düzeltildi: 32×32px) |
-| İçerik/Anlatı — başlık hiyerarşisi | ✅ Karşılanıyor (bu oturumda düzeltildi: h3→h2) |
-| Görsel/Hareket — kontrast | ✅ Karşılanıyor (bu oturumda düzeltildi: token + text-border temizliği) |
-| Navigasyon/CTA — tek baskın CTA | ❌ Eksik (footer hâlâ 3 eşit link) |
-| İçerik/Anlatı — proje kartlarında tıklanabilir kanıt | ❌ Eksik |
-| Sosyal Kanıt — canlı GitHub verisi | ❌ Eksik (hâlâ hard-coded) |
-| Hero — metaforu kanıtlayan gerçek etkileşim | ❌ Eksik (AI-Native Pipeline bölümü hâlâ statik 3 kart) |
-| Performans — gerçek prod ölçümü | ❌ Eksik (deploy henüz yapılmadı) |
+| Navigasyon/CTA — dokunma hedefi | ✅ Karşılanıyor (32×32px) |
+| İçerik/Anlatı — başlık hiyerarşisi | ✅ Karşılanıyor (h3→h2) |
+| Görsel/Hareket — kontrast | ✅ Karşılanıyor (token + text-border temizliği) |
+| Navigasyon/CTA — tek baskın CTA | ✅ Karşılanıyor (doğrulandı: [Footer.tsx](../../../src/components/system/Footer.tsx) — tek baskın LinkedIn CTA, GitHub/Mail ikincil küçük link olarak kaldı, kod yorumunda gerekçe açık) |
+| İçerik/Anlatı — proje kartlarında tıklanabilir kanıt | ✅ Karşılanıyor (doğrulandı: [Projects.tsx](../../../src/components/system/Projects.tsx) `p.evidence.url` — commit `3a15d4a`) |
+| Sosyal Kanıt — canlı GitHub verisi | ✅ Karşılanıyor (doğrulandı: [github-api.ts](../../../src/lib/github-api.ts) `fetchGitHubStats()` gerçek zamanlı `api.github.com/users/yutronax/repos` çağrısı, [GitHubSection.tsx](../../../src/components/system/GitHubSection.tsx) `stats` prop'unu render ediyor) |
+| Hero — metaforu kanıtlayan gerçek etkileşim | ✅ Karşılanıyor (doğrulandı: [AiPipeline.tsx](../../../src/components/system/AiPipeline.tsx) — tıkla-genişlet + `exampleContent`, klavye erişilebilir (`role="button"`, Enter/Space), commit `3613db6`) |
+| Performans — gerçek prod ölçümü | ✅ Karşılanıyor (VPS deploy tamamlandı — commit `07eee60`; gerçek prod Lighthouse raporu — commit `36738d2`; LCP kök nedeni ayrıca çözüldü — commit `2e7e116`) |
 
-Bu 5 eksik madde, bir sonraki `plan` adımının doğrudan girdisi.
+Önceki taramada (bu dosyanın ilk sürümü) listelenen 5 eksik madde artık yok —
+ilgili task'lar (`proje-karti-tiklanabilir-kanit` ve sonrasındaki commit'ler)
+bunları zaten kapatmış. Yeni bir eksik bulunmadı; bu madde `postmortem`/`plan`
+girdisi olarak kapatılabilir.
