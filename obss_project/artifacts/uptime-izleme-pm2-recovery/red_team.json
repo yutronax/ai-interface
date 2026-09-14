@@ -1,0 +1,74 @@
+{
+  "task": "uptime-izleme-pm2-recovery",
+  "reviewed_at": "2026-09-14T00:00:00Z",
+  "summary": "Kod, altı saf fonksiyon etrafında temiz ve test edilebilir şekilde yazılmış; PM2 found/online ayrımı ve webhook 401/403/network-error dallanması doğru uygulanmış. Ancak main()'deki fetch çağrısına verilen {timeout:10000} seçeneği native fetch'te (undici) geçersiz ve sessizce yok sayılıyor — gerçek bir timeout mekanizması yok ve bu main() hiç unit test edilmediği için fark edilmemiş; ayrıca pm2 komutu her hangi bir nedenle throw ederse süreç 'online' varsayılıyor, bu da tam da bu görevin önlemeye çalıştığı sessiz crash-loop senaryosunu tekrar açabilir.",
+  "findings": [
+    {
+      "severity": "high",
+      "category": "reliability",
+      "file": "scripts/uptime-check.mjs",
+      "issue": "main() içinde `fetch(checkUrl, { timeout: 10000 })` çağrısı yapılıyor; Node'un yerleşik (undici) fetch implementasyonu `timeout` seçeneğini desteklemiyor, sessizce görmezden geliyor. Dolayısıyla gerçek bir zaman aşımı uygulanmıyor.",
+      "better_approach": "AbortController + `setTimeout(() => controller.abort(), 10000)` veya `AbortSignal.timeout(10000)` kullanılarak `fetch(checkUrl, { signal })` şeklinde yazılmalı.",
+      "reason": "atdd.md Davranış Sözleşmesi satır 6: 'Zaman aşımı (health-check timeout 10-30sn) → Timeout = down sayılır'. Şu anki kod bu sözleşmeyi karşılamıyor; site bağlantıyı kabul edip hiç yanıt vermezse cron process'i süresiz askıda kalabilir, downtime tespiti ≤10 dk hedefini (Benchmark bölümü) tehlikeye atar. main() test edilmediği için 62/62 test yeşil görünse de bu regresyon fark edilmemiş."
+    },
+    {
+      "severity": "medium",
+      "category": "reliability",
+      "file": "scripts/uptime-check.mjs",
+      "issue": "`pm2 jlist` çalıştırma (`execSync`) herhangi bir nedenle (pm2 daemon geçici olarak kilitli, izin hatası, geçici sistem yükü) throw ederse, kod `pm2ProcessOnline = true` varsayımına geri dönüyor ve sadece console.error ile logluyor.",
+      "better_approach": "pm2 komutu başarısız olduğunda bunu ayrı bir 'pm2-check-failed' durumu olarak state'e işleyip, art arda birkaç kez pm2 kontrolü başarısız olursa da bir uyarı/log-tabanlı bildirim tetiklenmeli; en azından HTTP check sonucuna tam güvenilmemeli.",
+      "reason": "Bu görevin tetikleyici senaryosu tam olarak 'HTTP check yanlış pozitif verirken PM2 process'in sessizce düşmesi' (Davranış Sözleşmesi satır 8, AC-4). pm2 komutunun kendisi başarısız olduğunda sessizce 'online' varsayılması, aynı sessiz-başarısızlık riskini farklı bir yoldan yeniden açıyor."
+    },
+    {
+      "severity": "low",
+      "category": "maintainability",
+      "file": "scripts/uptime-check.mjs",
+      "issue": "Windows path normalizasyonu `scriptDir.replace(/^\\/[a-z]:/i, ...)` ile elle yapılıyor; bu Node'un standart `url.fileURLToPath()` fonksiyonunun yeniden icat edilmiş, kırılgan bir versiyonu.",
+      "better_approach": "`import { fileURLToPath } from 'node:url'; const scriptDir = path.dirname(fileURLToPath(import.meta.url));` kullanılmalı.",
+      "reason": "Standart kütüphane fonksiyonu edge-case'leri zaten doğru ele alıyor; production VPS Linux olduğu için bu regex prod'da hiç tetiklenmeyecek ama gereksiz özel kod."
+    },
+    {
+      "severity": "low",
+      "category": "risk",
+      "file": "scripts/uptime-check.mjs",
+      "issue": "`.uptime-state.json` dosyası kilitleme mekanizması olmadan okunup yazılıyor; cron çakışması durumunda state kaybı/çakışması riski var.",
+      "better_approach": "Cron/systemd tarafında overlapping run engelleme eklenmesi (doküman/kurulum seviyesinde ele alınabilir, kod seviyesinde zorunlu değil).",
+      "reason": "5 dakikalık aralıkla normalde çakışma olası değil ama ağ timeout'u düzeltilmezse bir çalıştırma 10dk+ sürebilir ve bir sonraki cron tetiklemesiyle çakışabilir — iki bulgu birbirini besliyor."
+    }
+  ],
+  "strengths": [
+    "checkPm2ProcessStatus, {found:false} (process yok) ile {found:true, online:false} (process errored/stopped) durumlarını doğru ayırıyor — atdd.md Davranış Sözleşmesi satır 8 ve AC-4'ün asıl talebi bu ayrım, doğru uygulanmış.",
+    "sendWebhookNotification hiçbir durumda throw etmiyor, 401/403 → 'unauthorized', network hatası → 'network-error', diğer HTTP hataları → 'server-error' olarak ayrıştırıyor ve her zaman {sent, reason?} döndürüyor — AC-S1 sessiz başarısızlık yasağı karşılanmış.",
+    "shouldNotifyDown mantığı wasDown===false koşuluyla tekrarlı DOWN spam'ini engelliyor, webhook gönderimi başarısız olursa wasDown false kalıp bir sonraki çalıştırmada tekrar denemeyi sağlıyor.",
+    ".env.example içinde sadece placeholder değerler var, gerçek secret yok; .gitignore'a .env ve .uptime-state.json eklenmiş — AC-S1/secret sızıntısı önlemi doğru."
+  ],
+  "risks": [
+    "fetch timeout'un çalışmaması nedeniyle site yanıt vermeyip bağlantıyı açık tutarsa cron script'i süresiz askıda kalabilir, bu da downtime tespiti ≤10 dk hedefini bozabilir.",
+    "pm2 komutu başarısız olduğunda 'online' varsayımı, sessiz-crash senaryosunun bir başka biçimde tekrar oluşmasına izin verebilir."
+  ],
+  "caveman_review": {
+    "complexity": "low",
+    "unnecessary_files": 0,
+    "unnecessary_helpers": 0,
+    "unnecessary_abstractions": 0
+  },
+  "scope_review": {
+    "matches_atdd": true,
+    "scope_expansion": false
+  },
+  "ready_to_commit": {
+    "atdd_satisfied": false,
+    "tests_passed": true,
+    "no_critical_findings": true,
+    "scope_respected": true,
+    "caveman_satisfied": true,
+    "security_acceptable": true,
+    "maintainability_acceptable": true,
+    "no_blocking_risks": false
+  },
+  "verdict": "approve-with-changes",
+  "post_review_fix": {
+    "applied": true,
+    "note": "3 bulgu (high/medium/low) code-copilot'a düzeltme turu olarak dispatch edildi ve uygulandı: (1) fetch({timeout}) → fetch({signal: AbortSignal.timeout(10000)}) — gerçek timeout artık çalışıyor, Davranış Sözleşmesi satır 6 karşılandı; (2) pm2 jlist throw ederse artık pessimist (offline) varsayılıyor, sessiz-başarısızlık riski kapatıldı; (3) path normalizasyonu node:url fileURLToPath ile standartlaştırıldı. 62/62 test tekrar PASS, eslint temiz. atdd_satisfied artık true kabul edilebilir — findings dosyada orijinal haliyle (tarihsel kayıt için) korunuyor."
+  }
+}
