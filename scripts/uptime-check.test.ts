@@ -168,7 +168,7 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "ai-interface",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 0,
         },
       ]);
@@ -182,7 +182,7 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "ai-interface",
-          status: "errored",
+          pm2_env: { status: "errored" },
           pm_id: 0,
         },
       ]);
@@ -195,7 +195,7 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "ai-interface",
-          status: "stopped",
+          pm2_env: { status: "stopped" },
           pm_id: 0,
         },
       ]);
@@ -210,7 +210,7 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "other-process",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 0,
         },
       ]);
@@ -230,17 +230,17 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "other-service",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 0,
         },
         {
           name: "ai-interface",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 1,
         },
         {
           name: "third-service",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 2,
         },
       ]);
@@ -253,7 +253,7 @@ describe("uptime-check.mjs — Unit Tests", () => {
       const mockPm2Jlist = vi.fn().mockResolvedValue([
         {
           name: "AI-INTERFACE",
-          status: "online",
+          pm2_env: { status: "online" },
           pm_id: 0,
         },
       ]);
@@ -716,7 +716,7 @@ describe("Davranış Sözleşmesi: uptime-izleme-pm2-recovery", () => {
     // Scenario A: Process is errored (found but offline)
     const mockPm2Jlist_A = vi
       .fn()
-      .mockResolvedValue([{ name: "ai-interface", status: "errored", pm_id: 0 }]);
+      .mockResolvedValue([{ name: "ai-interface", pm2_env: { status: "errored" }, pm_id: 0 }]);
     const resultA = await checkPm2ProcessStatus("ai-interface", mockPm2Jlist_A);
     expect(resultA).toEqual({ found: true, online: false });
 

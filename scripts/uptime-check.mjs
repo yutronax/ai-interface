@@ -69,7 +69,7 @@ export async function checkPm2ProcessStatus(processName, pm2JlistFn) {
     return { found: false };
   }
 
-  const isOnline = process.status === "online";
+  const isOnline = process.pm2_env?.status === "online";
   return {
     found: true,
     online: isOnline,
@@ -225,7 +225,7 @@ async function main() {
   // Step 5: Send notifications
   if (shouldNotifyDown) {
     const payload = buildNotificationPayload("down", { url: checkUrl });
-    const result = await sendWebhookNotification(webhookUrl, payload, fetch);
+    const result = await sendWebhookNotification(webhookUrl, { text: payload.message }, fetch);
 
     if (result.sent) {
       state.wasDown = true;
@@ -237,7 +237,7 @@ async function main() {
 
   if (shouldNotifyRecovered) {
     const payload = buildNotificationPayload("recovered", { url: checkUrl });
-    const result = await sendWebhookNotification(webhookUrl, payload, fetch);
+    const result = await sendWebhookNotification(webhookUrl, { text: payload.message }, fetch);
 
     if (result.sent) {
       state.wasDown = false;
