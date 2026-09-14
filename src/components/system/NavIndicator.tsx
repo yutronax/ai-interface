@@ -13,6 +13,19 @@ export function NavIndicator() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Full panel is ~115px tall and near-full-width on a 375px screen, and it
+  // sits fixed above the last section's content (e.g. Projects' "OPEN ON
+  // GITHUB" links) — on mobile it starts collapsed to a small badge so it
+  // doesn't cover other tap targets; desktop keeps it always expanded.
+  const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const sync = () => setExpanded(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter((n): n is HTMLElement =>
@@ -62,19 +75,47 @@ export function NavIndicator() {
     }
   }
 
+  if (!expanded) {
+    return (
+      <nav
+        aria-label="Section navigator (terminal)"
+        className="fixed bottom-5 right-5 z-50 select-none"
+      >
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          aria-label={`Open section navigator (currently ${entry.label})`}
+          className="hair tap-target mono flex h-10 min-w-10 items-center justify-center bg-background/90 px-2 text-[10px] tracking-[0.18em] text-signal backdrop-blur-[2px]"
+        >
+          {String(active + 1).padStart(2, "0")} / {String(SECTIONS.length).padStart(2, "0")}
+        </button>
+      </nav>
+    );
+  }
+
   return (
     <nav
       aria-label="Section navigator (terminal)"
       className="fixed bottom-5 right-5 z-50 select-none sm:bottom-8 sm:right-8"
     >
       <div className="hair w-[min(78vw,300px)] bg-background/90 px-3 py-2.5 backdrop-blur-[2px]">
-        <div className="mono text-[10px] tracking-[0.18em] text-signal">
-          {String(active + 1).padStart(2, "0")} / {String(SECTIONS.length).padStart(2, "0")}
+        <div className="flex items-center justify-between">
+          <div className="mono text-[10px] tracking-[0.18em] text-signal">
+            {String(active + 1).padStart(2, "0")} / {String(SECTIONS.length).padStart(2, "0")}
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            aria-label="Collapse section navigator"
+            className="tap-target mono text-[10px] text-muted-foreground sm:hidden"
+          >
+            ×
+          </button>
         </div>
 
         <a
           href={`#${entry.id}`}
-          className="mono mt-1.5 block truncate text-[11px] tracking-[0.05em] text-foreground"
+          className="tap-target mono mt-1.5 block truncate text-[11px] tracking-[0.05em] text-foreground"
           aria-label={`Go to ${entry.label}`}
         >
           <span className="text-muted-foreground">$ </span>

@@ -68,26 +68,33 @@ function Panel({ p }: { p: Project }) {
           <span className="text-signal-dim">/ / </span>
           {p.detail}
         </motion.p>
-        <a
-          href={p.url}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="rule-link mono group mt-5 inline-block text-xs tracking-[0.22em] text-foreground"
-        >
-          {"<>"} OPEN ON GITHUB
-          <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
-        </a>
-        {p.evidence && (
+        {/* flex-col instead of relying on inline-block + margin-top: two
+            adjacent inline-block <a>'s don't force a line break on their
+            own, so at narrow widths (or any width with enough room) they
+            rendered side by side with the text touching ("OPEN ON
+            GITHUBVIEW REPO") instead of stacking. */}
+        <div className="mt-5 flex flex-col items-start gap-3">
           <a
-            href={p.evidence.url}
+            href={p.url}
             target="_blank"
             rel="noreferrer noopener"
-            className="rule-link mono group mt-3 inline-block text-xs tracking-[0.22em] text-foreground"
+            className="rule-link mono group inline-block text-xs tracking-[0.22em] text-foreground"
           >
-            {p.evidence.label}
+            {"<>"} OPEN ON GITHUB
             <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
           </a>
-        )}
+          {p.evidence && (
+            <a
+              href={p.evidence.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="rule-link mono group inline-block text-xs tracking-[0.22em] text-foreground"
+            >
+              {p.evidence.label}
+              <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

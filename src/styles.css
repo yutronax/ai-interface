@@ -143,11 +143,26 @@
 @utility rule-link {
   position: relative;
   display: inline-block;
+
+  /* Visible text is often <24px tall (text-xs/[11px] line-height), failing
+     the WCAG/Lighthouse target-size minimum on touch devices. Growing the
+     real border box via padding (and pulling it back with an equal
+     negative margin) enlarges the measured tap target to >=24px without
+     shifting where the text visually sits. */
+  padding-block: 5px;
+  margin-block: -5px;
+}
+@utility tap-target {
+  padding-block: 5px;
+  margin-block: -5px;
 }
 @utility rule-link-under {
   position: absolute;
   left: 0;
-  bottom: -2px;
+  /* rule-link has padding-block: 5px for its tap-target fix, so this is
+     offset 3px (not -2px) from the padded box edge to keep sitting 2px
+     below the actual (unpadded) text line. */
+  bottom: 3px;
   height: 1px;
   width: 100%;
   transform: scaleX(0);

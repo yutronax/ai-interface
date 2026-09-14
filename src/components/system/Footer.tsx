@@ -110,7 +110,9 @@ export function Footer() {
 
         <Hairline />
 
-        <div className="py-6">
+        {/* pr-20 keeps the copyright line clear of the fixed NavIndicator
+            badge, which otherwise overlaps this corner on narrow screens. */}
+        <div className="py-6 pr-20 sm:pr-0">
           <div className="mono text-[10px] tracking-[0.22em] text-muted-foreground">
             © {new Date().getFullYear()} {IDENTITY.name} · INTERFACE v1.0
           </div>
