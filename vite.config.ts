@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Actual deploy target is a plain Node process on a VPS (via PM2), not Cloudflare Workers —
+  // node-server produces a real production HTTP server (`node .output/server/index.mjs`)
+  // instead of a Workers-only bundle that needs `wrangler`/`workerd` (a dev tool) to run.
+  nitro: {
+    preset: "node-server",
+  },
 });
