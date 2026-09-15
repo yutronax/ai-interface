@@ -140,15 +140,35 @@ export const PROJECTS: Project[] = [
   },
 ];
 
-export const TECH_GRAPH: { root: string; children: { name: string; leaves: string[] }[] } = {
-  root: "Python",
-  children: [
-    { name: "PyTorch", leaves: ["U-Net", "DeepLabV3+", "ViLT"] },
-    { name: "OpenCV", leaves: ["Preprocessing", "Masking"] },
-    { name: "Transformers", leaves: ["NLP Pipelines", "LLM Routing"] },
-    { name: "FastAPI", leaves: ["Serving", "Agents API"] },
-  ],
-};
+/**
+ * Grouped by language (not a single "Python root") so the section doesn't
+ * read as "only Python is known" — every tool here is one already listed in
+ * REPOS/PROJECTS's own stacks, nothing invented (tech-stack-kart-grid, AC-3).
+ */
+export const TECH_STACK: { language: string; tools: string[] }[] = [
+  {
+    language: "Python",
+    tools: [
+      "PyTorch",
+      "U-Net",
+      "DeepLabV3+",
+      "OpenCV",
+      "Transformers",
+      "CLIP",
+      "VQA",
+      "Rasterio",
+      "scikit-learn",
+      "NumPy",
+      "Pandas",
+      "Matplotlib",
+      "FastAPI",
+    ],
+  },
+  {
+    language: "TypeScript",
+    tools: ["React", "LLM Agents"],
+  },
+];
 
 export const PIPELINE = [
   {

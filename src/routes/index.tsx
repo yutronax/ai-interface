@@ -79,7 +79,7 @@ function Index() {
         </Suspense>
       </SectionErrorBoundary>
       <SectionErrorBoundary>
-        <Suspense fallback={<SectionSkeleton minHeight="260vh" />}>
+        <Suspense fallback={<SectionSkeleton minHeight="100vh" />}>
           <TechStack />
         </Suspense>
       </SectionErrorBoundary>
