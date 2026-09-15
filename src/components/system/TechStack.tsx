@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { TECH_STACK } from "@/lib/portfolio-data";
 import { Hairline, TypeLines } from "./primitives";
 import { useTypewriter, Cursor } from "./use-typewriter";
@@ -11,26 +12,32 @@ const LANG_COLOR: Record<string, string> = {
   Java: "var(--color-signal-dim)",
 };
 
-/** Roughly how long `useTypewriter` takes to finish a command line, so the
- * next block's command can start typing right after — one continuous
- * terminal session instead of every block appearing at once. */
 const TYPE_SPEED_MS = 18;
-function typingDurationMs(command: string) {
-  return command.length * TYPE_SPEED_MS + 700;
-}
+/** Pause after a command's output finishes before the next one starts
+ * typing — a real shell doesn't chain commands with zero gap. */
+const PAUSE_BETWEEN_MS = 550;
 
 function ManifestBlock({
   entry,
-  startDelay,
+  active,
+  onDone,
 }: {
   entry: (typeof TECH_STACK)[number];
-  startDelay: number;
+  active: boolean;
+  onDone: () => void;
 }) {
-  // Always active from mount (like NavIndicator's command line) rather than
-  // gated on scroll-into-view: these blocks sit well below the fold, so by
-  // the time a visitor scrolls to them the typing has already settled —
-  // it reads as an already-running terminal session, not a pop-in.
-  const command = useTypewriter(entry.command, TYPE_SPEED_MS, startDelay, true);
+  // A block doesn't even start typing until the previous one has fully
+  // finished (see TechStack's revealedCount) — only one command is ever
+  // "running" at a time, like an actual terminal executing a script
+  // top-to-bottom rather than three commands appearing at once.
+  const command = useTypewriter(entry.command, TYPE_SPEED_MS, 250, active);
+
+  useEffect(() => {
+    if (!command.done) return;
+    const t = window.setTimeout(onDone, PAUSE_BETWEEN_MS);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDone is caps at TECH_STACK.length by the parent, re-invoking it is harmless
+  }, [command.done]);
 
   return (
     <div>
@@ -46,27 +53,17 @@ function ManifestBlock({
           {!command.done && <Cursor />}
         </span>
       </div>
-      {command.done && (
-        <TypeLines
-          className="mt-3 pl-5"
-          lines={entry.tools}
-          prefix="·"
-          gap={0.05}
-        />
-      )}
+      {command.done && <TypeLines className="mt-3 pl-5" lines={entry.tools} prefix="·" gap={0.05} />}
     </div>
   );
 }
 
 export function TechStack() {
   const totalTools = TECH_STACK.reduce((n, entry) => n + entry.tools.length, 0);
-
-  let cumulativeDelay = 400;
-  const startDelays = TECH_STACK.map((entry) => {
-    const delay = cumulativeDelay;
-    cumulativeDelay += typingDurationMs(entry.command) + 900;
-    return delay;
-  });
+  // How many blocks exist in the DOM yet — grows one at a time as each
+  // finishes, instead of all 3 being pre-scheduled with fixed delays.
+  const [revealedCount, setRevealedCount] = useState(1);
+  const allDone = revealedCount >= TECH_STACK.length;
 
   return (
     <section id="stack" className="relative w-full px-3 pt-28 sm:px-6">
@@ -83,9 +80,21 @@ export function TechStack() {
           <Hairline className="mt-3" />
 
           <div className="mt-10 space-y-10">
-            {TECH_STACK.map((entry, i) => (
-              <ManifestBlock key={entry.language} entry={entry} startDelay={startDelays[i]!} />
+            {TECH_STACK.slice(0, revealedCount).map((entry, i) => (
+              <ManifestBlock
+                key={entry.language}
+                entry={entry}
+                active={i === revealedCount - 1}
+                onDone={() => setRevealedCount((c) => Math.min(TECH_STACK.length, c + 1))}
+              />
             ))}
+            {/* idle prompt once the whole "script" has finished running */}
+            {allDone && (
+              <div className="mono flex items-center gap-2 text-sm text-muted-foreground sm:text-base">
+                <span className="text-signal">$</span>
+                <Cursor />
+              </div>
+            )}
           </div>
         </div>
       </TerminalWindow>

@@ -18,11 +18,17 @@ import { TECH_STACK } from "@/lib/portfolio-data";
  */
 
 function advanceWellPastAllTyping() {
-  // Comfortably longer than the cumulative startDelay + typing duration for
-  // all 3 sequential blocks combined (worked out to ~6s at 18ms/char).
-  act(() => {
-    vi.advanceTimersByTime(10000);
-  });
+  // Each block only mounts once the previous one's onDone fires from
+  // inside a useEffect — advancing fake time in one big jump doesn't
+  // reliably interleave with React's effect-flush cycle, so step forward
+  // in small increments (comfortably more total time than the ~6s all 3
+  // sequential blocks take at 18ms/char) to let each stage's timers/effects
+  // actually run before advancing further.
+  for (let i = 0; i < 60; i++) {
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+  }
 }
 
 describe("TechStack — sequential manifest terminal", () => {
