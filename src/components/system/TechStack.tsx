@@ -71,7 +71,10 @@ export function TechStack() {
   const totalTools = TECH_STACK.reduce((n, entry) => n + entry.tools.length, 0);
 
   return (
-    <section id="stack" className="relative w-full px-3 pt-28 sm:px-6">
+    <section
+      id="stack"
+      className="relative flex min-h-screen w-full items-center px-3 py-28 sm:px-6"
+    >
       <TerminalWindow title="yusuf@system — stack" className="mx-auto w-full max-w-[1400px]">
         <div className="px-5 py-6 sm:px-10 sm:py-8">
           <div className="flex items-baseline justify-between">
