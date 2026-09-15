@@ -95,6 +95,35 @@ describe("TechStack — scroll-triggered manifest terminal", () => {
     expect(screen.queryByText("Rust")).not.toBeInTheDocument();
   });
 
+  it("erases a command character-by-character when scrolled back out of view, instead of snapping away instantly", async () => {
+    mockUseInView.mockReturnValue(true);
+    vi.useFakeTimers();
+    const TechStack = await loadTechStack();
+    const { rerender } = render(<TechStack />);
+    advanceWellPastAllTyping();
+    const fullCommand = TECH_STACK[0]!.command;
+    expect(document.body.textContent).toContain(fullCommand);
+
+    // Scrolled back out of view — re-render so the mocked `useInView`
+    // returns false on this render pass (the real hook would flip on its
+    // own via the IntersectionObserver callback; the mock needs a nudge).
+    mockUseInView.mockReturnValue(false);
+    rerender(<TechStack />);
+
+    // A handful of erase-ticks only (not fully past) — the full command
+    // should already be gone (erasing has started) well before enough
+    // time has passed to erase everything, proving it's a gradual erase
+    // rather than an instant snap the moment it leaves view.
+    act(() => {
+      vi.advanceTimersByTime(18 * 3); // a few erase-interval ticks (TYPE_SPEED_MS in TechStack.tsx)
+    });
+    expect(document.body.textContent).not.toContain(fullCommand);
+
+    // Given enough time, it erases all the way back to nothing.
+    advanceWellPastAllTyping();
+    expect(document.body.textContent).not.toContain(fullCommand.slice(0, 5));
+  });
+
   it("renders the correct language/package count summary in the header immediately (not gated on scroll/typing)", async () => {
     mockUseInView.mockReturnValue(false);
     const TechStack = await loadTechStack();

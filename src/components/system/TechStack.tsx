@@ -1,8 +1,8 @@
 import { useInView } from "motion/react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TECH_STACK } from "@/lib/portfolio-data";
 import { Hairline, TypeLines } from "./primitives";
-import { useTypewriter, Cursor } from "./use-typewriter";
+import { Cursor } from "./use-typewriter";
 import { TerminalWindow } from "./TerminalWindow";
 
 /** Python=signal, JS/TS=amber, Java=signal-dim — reuses the site's existing
@@ -15,13 +15,38 @@ const LANG_COLOR: Record<string, string> = {
 
 const TYPE_SPEED_MS = 18;
 
+/**
+ * Like `useTypewriter`, but symmetrical: scrolling a block out of view
+ * erases it character-by-character (not just an instant snap), and
+ * scrolling back in retypes from wherever it left off — the shared
+ * `useTypewriter` (NavIndicator/Hero) only ever types forward once, so this
+ * is a separate hook rather than a shared-behavior change.
+ */
+function useReversibleTypewriter(text: string, active: boolean) {
+  const [typed, setTyped] = useState("");
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setTyped((current) => {
+        if (active) {
+          return current.length < text.length ? text.slice(0, current.length + 1) : current;
+        }
+        return current.length > 0 ? text.slice(0, current.length - 1) : current;
+      });
+    }, TYPE_SPEED_MS);
+    return () => window.clearInterval(id);
+  }, [active, text]);
+
+  return { typed, done: typed.length === text.length };
+}
+
 function ManifestBlock({ entry }: { entry: (typeof TECH_STACK)[number] }) {
-  // Each block runs its own command only once IT is scrolled into view —
-  // not on a fixed timer, not chained to the previous block finishing.
-  // Scrolling down the page is what "executes" each language in turn.
+  // Each block runs its own command while IT is scrolled into view, and
+  // reverses (erases) when scrolled back out — no `once`, so it's fully
+  // tied to scroll position in both directions.
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20%" });
-  const command = useTypewriter(entry.command, TYPE_SPEED_MS, 150, inView);
+  const inView = useInView(ref, { margin: "-20%" });
+  const command = useReversibleTypewriter(entry.command, inView);
 
   return (
     <div ref={ref}>
@@ -34,7 +59,7 @@ function ManifestBlock({ entry }: { entry: (typeof TECH_STACK)[number] }) {
         <span className="text-signal">$</span>
         <span className="text-foreground">
           {command.typed}
-          {inView && !command.done && <Cursor />}
+          {(command.typed.length > 0 || inView) && !command.done && <Cursor />}
         </span>
       </div>
       {command.done && <TypeLines className="mt-3 pl-5" lines={entry.tools} prefix="·" gap={0.05} />}
