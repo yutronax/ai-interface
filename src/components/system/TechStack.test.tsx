@@ -1,39 +1,48 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
-import { TechStack } from "./TechStack";
 import { TECH_STACK } from "@/lib/portfolio-data";
 
 /**
- * Tests for the "$ cat <manifest>" sequential-terminal redesign of Tech
- * Stack (Saga #392, second iteration — card/grid was also rejected).
- * Each language types its own real package-manifest command
- * (requirements.txt / package.json / pom.xml) one after another in a
- * single terminal, instead of a grid of boxed cards or a single-root
- * ASCII tree.
+ * Tests for the "$ cat <manifest>" scroll-triggered terminal redesign of
+ * Tech Stack (Saga #392, 4th iteration): each language's command only
+ * starts typing once ITS block scrolls into view — not a fixed timer, not
+ * chained to the previous block finishing. Scrolling down the page is what
+ * "runs" each language's command in turn.
  *
- * useTypewriter drives typing via real setTimeout/setInterval, so these
- * tests use fake timers (same pattern as Hero.test.tsx) to deterministically
- * fast-forward past the typing animation instead of waiting on wall-clock
- * time.
+ * `motion/react`'s `useInView` is backed by a real `IntersectionObserver`
+ * that, in this jsdom test environment, never actually reports an element
+ * as intersecting (confirmed by direct probing — `resolveElements()`'s
+ * `instanceof EventTarget` check doesn't recognize jsdom nodes the way it
+ * does in a real browser here). The scroll-triggered reveal itself was
+ * verified directly in a real browser (Playwright) instead. Here,
+ * `useInView` is mocked directly so the *typing/rendering* behavior once a
+ * block IS in view can still be tested deterministically, without fighting
+ * jsdom's IntersectionObserver semantics.
  */
 
+const mockUseInView = vi.fn();
+vi.mock("motion/react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("motion/react")>();
+  return { ...actual, useInView: (...args: unknown[]) => mockUseInView(...args) };
+});
+
+async function loadTechStack() {
+  const { TechStack } = await import("./TechStack");
+  return TechStack;
+}
+
 function advanceWellPastAllTyping() {
-  // Each block only mounts once the previous one's onDone fires from
-  // inside a useEffect — advancing fake time in one big jump doesn't
-  // reliably interleave with React's effect-flush cycle, so step forward
-  // in small increments (comfortably more total time than the ~6s all 3
-  // sequential blocks take at 18ms/char) to let each stage's timers/effects
-  // actually run before advancing further.
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 30; i++) {
     act(() => {
       vi.advanceTimersByTime(300);
     });
   }
 }
 
-describe("TechStack — sequential manifest terminal", () => {
+describe("TechStack — scroll-triggered manifest terminal", () => {
   afterEach(() => {
     vi.useRealTimers();
+    mockUseInView.mockReset();
   });
 
   it("has at least 3 distinct languages in its data, each with a real manifest command", () => {
@@ -44,30 +53,38 @@ describe("TechStack — sequential manifest terminal", () => {
     }
   });
 
-  it("renders every language's manifest command once typing completes", () => {
+  it("does not type any command before its block has scrolled into view", async () => {
+    mockUseInView.mockReturnValue(false);
     vi.useFakeTimers();
+    const TechStack = await loadTechStack();
+    render(<TechStack />);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText(TECH_STACK[0]!.tools[0]!)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain(TECH_STACK[0]!.command);
+  });
+
+  it("types each block's command and renders its tools once it is in view", async () => {
+    mockUseInView.mockReturnValue(true);
+    vi.useFakeTimers();
+    const TechStack = await loadTechStack();
     render(<TechStack />);
     advanceWellPastAllTyping();
 
     for (const entry of TECH_STACK) {
       expect(document.body.textContent).toContain(entry.command);
-    }
-  });
-
-  it("renders every tool for every language once typing finishes", () => {
-    vi.useFakeTimers();
-    render(<TechStack />);
-    advanceWellPastAllTyping();
-
-    for (const entry of TECH_STACK) {
       for (const tool of entry.tools) {
         expect(screen.getByText(tool)).toBeInTheDocument();
       }
     }
   });
 
-  it("does not render any tool that isn't part of TECH_STACK's own data (no invented technologies)", () => {
+  it("does not render any tool that isn't part of TECH_STACK's own data (no invented technologies)", async () => {
+    mockUseInView.mockReturnValue(true);
     vi.useFakeTimers();
+    const TechStack = await loadTechStack();
     render(<TechStack />);
     advanceWellPastAllTyping();
 
@@ -78,15 +95,9 @@ describe("TechStack — sequential manifest terminal", () => {
     expect(screen.queryByText("Rust")).not.toBeInTheDocument();
   });
 
-  it("shows a typing cursor and no tool listing yet before typing starts (t=0)", () => {
-    vi.useFakeTimers();
-    render(<TechStack />);
-    // No time advanced — first block's command hasn't started typing.
-
-    expect(screen.queryByText(TECH_STACK[0]!.tools[0]!)).not.toBeInTheDocument();
-  });
-
-  it("renders the correct language/package count summary in the header immediately (not gated on typing)", () => {
+  it("renders the correct language/package count summary in the header immediately (not gated on scroll/typing)", async () => {
+    mockUseInView.mockReturnValue(false);
+    const TechStack = await loadTechStack();
     render(<TechStack />);
 
     const totalTools = TECH_STACK.reduce((n, e) => n + e.tools.length, 0);
