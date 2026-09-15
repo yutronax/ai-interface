@@ -604,3 +604,212 @@ describe("fetchGitHubStats — github-api.ts", () => {
     });
   });
 });
+
+/**
+ * Test suite for fetchGitHubRepoDetails() — added for icerik-animasyon-entegrasyon
+ * (Saga #391, AC-1..AC-4, AC-S1).
+ *
+ * - Shares the same cached raw response as fetchGitHubStats() — must NOT
+ *   trigger a second HTTP request (AC-1).
+ * - Returns description/language/stars/url per repo.
+ * - On any failure, returns [] (never throws) — GitHubSection merges this
+ *   against REPOS and keeps the static value per repo when there's no live
+ *   match (AC-3).
+ * - null/missing description or language must not crash and must surface
+ *   as null (AC-4), which GitHubSection renders as a "—" placeholder.
+ */
+describe("fetchGitHubRepoDetails — github-api.ts", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("AC-1/AC-2 [Critical]: happy path returns live repo details", () => {
+    it("should return description/language/stars/url per repo", async () => {
+      const mockApiResponse = [
+        {
+          name: "flood-detection",
+          description: "Sentinel-2 flood segmentation",
+          language: "Python",
+          stargazers_count: 12,
+          html_url: "https://github.com/yutronax/flood-detection",
+        },
+      ];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result).toEqual([
+        {
+          name: "flood-detection",
+          description: "Sentinel-2 flood segmentation",
+          language: "Python",
+          stars: 12,
+          url: "https://github.com/yutronax/flood-detection",
+        },
+      ]);
+    });
+
+    it("should not issue a second HTTP request when fetchGitHubStats() already cached the response", async () => {
+      const mockApiResponse = [
+        { name: "repo-1", stargazers_count: 5, language: "TypeScript", description: null },
+      ];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubStats, fetchGitHubRepoDetails } = await import("./github-api");
+
+      await fetchGitHubStats();
+      await fetchGitHubRepoDetails();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should fall back to a constructed github.com URL when html_url is missing", async () => {
+      const mockApiResponse = [
+        { name: "no-url-repo", stargazers_count: 1, language: null, description: null },
+      ];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result[0]?.url).toBe("https://github.com/yutronax/no-url-repo");
+    });
+  });
+
+  describe("AC-4 [High]: null/missing description or language handled defensively", () => {
+    it("should return null (not throw/crash) for missing description and language", async () => {
+      const mockApiResponse = [{ name: "bare-repo", stargazers_count: 0 }];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result).toEqual([
+        {
+          name: "bare-repo",
+          description: null,
+          language: null,
+          stars: 0,
+          url: "https://github.com/yutronax/bare-repo",
+        },
+      ]);
+    });
+
+    it("should treat null stargazers_count as 0", async () => {
+      const mockApiResponse = [
+        { name: "repo", stargazers_count: null, language: "Python", description: "x" },
+      ];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result[0]?.stars).toBe(0);
+    });
+  });
+
+  describe("AC-3 [High]: fallback to empty array on failure, never throws", () => {
+    it("should return [] on network error", async () => {
+      const fetchMock = vi.fn().mockRejectedValue(new Error("Network error"));
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] on non-ok response", async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 403 });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return [] on malformed JSON", async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should never throw regardless of failure mode", async () => {
+      const fetchMock = vi.fn().mockRejectedValue(new Error("boom"));
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+
+      let thrown = false;
+      try {
+        await fetchGitHubRepoDetails();
+      } catch {
+        thrown = true;
+      }
+
+      expect(thrown).toBe(false);
+    });
+  });
+
+  describe("AC-S1 [High, threat-model]: description is returned as plain data, not markup", () => {
+    it("should pass through an HTML/script-like description as a literal string, unmodified and unexecuted", async () => {
+      const malicious = "<img src=x onerror=alert(1)>";
+      const mockApiResponse = [
+        { name: "repo", description: malicious, language: "Python", stargazers_count: 1 },
+      ];
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(mockApiResponse),
+      });
+      global.fetch = fetchMock;
+
+      const { fetchGitHubRepoDetails } = await import("./github-api");
+      const result = await fetchGitHubRepoDetails();
+
+      // The data layer must not sanitize/strip/execute this — it's just a
+      // string. The render layer (GitHubSection.test.tsx) proves it's
+      // never passed to dangerouslySetInnerHTML.
+      expect(result[0]?.description).toBe(malicious);
+      expect(typeof result[0]?.description).toBe("string");
+    });
+  });
+});

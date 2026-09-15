@@ -1,7 +1,7 @@
 import React from "react";
 import { Suspense } from "react";
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
-import { fetchGitHubStats } from "@/lib/github-api";
+import { fetchGitHubStats, fetchGitHubRepoDetails } from "@/lib/github-api";
 import { Hero } from "@/components/system/Hero";
 import { Footer } from "@/components/system/Footer";
 import { NavIndicator } from "@/components/system/NavIndicator";
@@ -28,7 +28,13 @@ const GitHubSection = React.lazy(() =>
 );
 
 export const Route = createFileRoute("/")({
-  loader: () => fetchGitHubStats(),
+  loader: async () => {
+    const [stats, repoDetails] = await Promise.all([
+      fetchGitHubStats(),
+      fetchGitHubRepoDetails(),
+    ]);
+    return { stats, repoDetails };
+  },
   head: () => ({
     meta: [
       { title: "Yusuf Çınar — AI Engineer" },
@@ -51,7 +57,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const stats = useLoaderData({ from: "/" });
+  const { stats, repoDetails } = useLoaderData({ from: "/" });
 
   return (
     <main className="relative min-h-screen bg-background text-foreground">
@@ -84,7 +90,7 @@ function Index() {
       </SectionErrorBoundary>
       <SectionErrorBoundary>
         <Suspense fallback={<SectionSkeleton minHeight="100vh" />}>
-          <GitHubSection stats={stats} />
+          <GitHubSection stats={stats} repoDetails={repoDetails} />
         </Suspense>
       </SectionErrorBoundary>
       <Footer />

@@ -78,9 +78,15 @@ function Panel({ p }: { p: Project }) {
             href={p.url}
             target="_blank"
             rel="noreferrer noopener"
-            className="rule-link mono group inline-block text-xs tracking-[0.22em] text-foreground"
+            className="rule-link mono group inline-flex items-center gap-1.5 text-xs tracking-[0.22em] text-foreground"
           >
             {"<>"} OPEN ON GITHUB
+            <span
+              aria-hidden
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            >
+              ↗
+            </span>
             <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
           </a>
           {p.evidence && (
@@ -88,9 +94,15 @@ function Panel({ p }: { p: Project }) {
               href={p.evidence.url}
               target="_blank"
               rel="noreferrer noopener"
-              className="rule-link mono group inline-block text-xs tracking-[0.22em] text-foreground"
+              className="rule-link mono group inline-flex items-center gap-1.5 text-xs tracking-[0.22em] text-foreground"
             >
               {p.evidence.label}
+              <span
+                aria-hidden
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
+              >
+                ↗
+              </span>
               <span className="rule-link-under group-hover:origin-left group-hover:scale-x-100" />
             </a>
           )}

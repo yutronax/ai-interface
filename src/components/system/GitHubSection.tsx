@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { IDENTITY, REPOS } from "@/lib/portfolio-data";
+import type { GitHubRepoDetail } from "@/lib/github-api";
 import { Hairline, Meta } from "./primitives";
 import { TerminalWindow } from "./TerminalWindow";
 
@@ -11,9 +12,29 @@ const LANG_COLOR: Record<string, string> = {
 
 interface GitHubSectionProps {
   stats: { repoCount: number; totalStars: number };
+  /** Live per-repo data (description/language/stars/url). REPOS's `type`/
+   * `stack`/`activity` stay curated (GitHub's API has no equivalent) — only
+   * language/stars/url/description are overridden per repo, when a live
+   * match exists. Empty/missing entries keep REPOS's static values (AC-3). */
+  repoDetails?: GitHubRepoDetail[];
 }
 
-export function GitHubSection({ stats }: GitHubSectionProps) {
+export function GitHubSection({ stats, repoDetails = [] }: GitHubSectionProps) {
+  const rows = REPOS.map((r) => {
+    const live = repoDetails.find((d) => d.name === r.name);
+    // `live` (when found) is authoritative even if its language is null —
+    // `??` alone would wrongly fall back to REPOS's static value for a repo
+    // whose live language genuinely is null, conflating "no live match"
+    // with "live match with a null field".
+    return {
+      ...r,
+      language: live ? live.language : r.language,
+      stars: live ? live.stars : r.stars,
+      description: live?.description ?? null,
+      url: live?.url ?? IDENTITY.github,
+    };
+  });
+
   return (
     <section id="github" className="relative w-full px-3 pt-28 sm:px-6">
       <TerminalWindow title="yusuf@system — github" className="mx-auto w-full max-w-[1400px]">
@@ -60,10 +81,11 @@ export function GitHubSection({ stats }: GitHubSectionProps) {
               <span className="text-right">ACTIVITY</span>
             </div>
             <Hairline />
-            {REPOS.map((r, i) => (
+            {rows.map((r, i) => (
               <motion.a
                 key={r.name}
-                href={IDENTITY.github}
+                href={r.url}
+                title={r.description ?? undefined}
                 target="_blank"
                 rel="noreferrer noopener"
                 initial={{ opacity: 0, x: -20 }}
@@ -87,9 +109,9 @@ export function GitHubSection({ stats }: GitHubSectionProps) {
                 <span className="mono hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
                   <span
                     className="inline-block h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: LANG_COLOR[r.language] ?? "var(--color-border)" }}
+                    style={{ backgroundColor: LANG_COLOR[r.language ?? ""] ?? "var(--color-border)" }}
                   />
-                  {r.language}
+                  {r.language ?? "—"}
                 </span>
                 <span className="mono hidden text-right text-xs text-foreground sm:block">
                   ◇ {r.stars}
