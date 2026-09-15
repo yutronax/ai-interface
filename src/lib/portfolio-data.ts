@@ -141,32 +141,44 @@ export const PROJECTS: Project[] = [
 ];
 
 /**
- * Grouped by language (not a single "Python root") so the section doesn't
- * read as "only Python is known" — every tool here is one already listed in
- * REPOS/PROJECTS's own stacks, nothing invented (tech-stack-kart-grid, AC-3).
+ * Grouped by language, one real package-manifest convention per language
+ * (not a single "Python root" or a generic card grid — both read as
+ * templated/incomplete in review). Every tool here is a real installable
+ * package name from Yusuf's own CV skills list, nothing invented —
+ * "U-Net"/"DeepLabV3+"/"CLIP" etc. are model architectures, not pip
+ * packages, so they're deliberately left out of a requirements.txt-style
+ * listing (they'd look fake in an authentic "cat <manifest>" rendering).
  */
-export const TECH_STACK: { language: string; tools: string[] }[] = [
+export const TECH_STACK: { language: string; manifestFile: string; command: string; tools: string[] }[] = [
   {
     language: "Python",
+    manifestFile: "requirements.txt",
+    command: "cat requirements.txt",
     tools: [
-      "PyTorch",
-      "U-Net",
-      "DeepLabV3+",
-      "OpenCV",
-      "Transformers",
-      "CLIP",
-      "VQA",
-      "Rasterio",
+      "torch",
+      "opencv-python",
+      "transformers",
       "scikit-learn",
-      "NumPy",
-      "Pandas",
-      "Matplotlib",
-      "FastAPI",
+      "xgboost",
+      "lightgbm",
+      "catboost",
+      "fastapi",
+      "django",
+      "numpy",
+      "pandas",
     ],
   },
   {
-    language: "TypeScript",
-    tools: ["React", "LLM Agents"],
+    language: "TypeScript/JavaScript",
+    manifestFile: "package.json",
+    command: "cat package.json | jq '.dependencies | keys[]'",
+    tools: ["react", "next", "express", "prisma"],
+  },
+  {
+    language: "Java",
+    manifestFile: "pom.xml",
+    command: "cat pom.xml | grep artifactId",
+    tools: ["javafx-controls", "javafx-fxml", "sqlite-jdbc"],
   },
 ];
 

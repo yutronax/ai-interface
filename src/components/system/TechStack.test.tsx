@@ -1,81 +1,91 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import { TechStack } from "./TechStack";
 import { TECH_STACK } from "@/lib/portfolio-data";
 
 /**
- * Tests for tech-stack-kart-grid (Saga #392) — replaces the old single-root
- * ASCII tree ("Python" root with all tools underneath, which read as "only
- * Python is known") with a language-grouped card grid.
+ * Tests for the "$ cat <manifest>" sequential-terminal redesign of Tech
+ * Stack (Saga #392, second iteration — card/grid was also rejected).
+ * Each language types its own real package-manifest command
+ * (requirements.txt / package.json / pom.xml) one after another in a
+ * single terminal, instead of a grid of boxed cards or a single-root
+ * ASCII tree.
+ *
+ * useTypewriter drives typing via real setTimeout/setInterval, so these
+ * tests use fake timers (same pattern as Hero.test.tsx) to deterministically
+ * fast-forward past the typing animation instead of waiting on wall-clock
+ * time.
  */
 
-describe("TechStack — language-grouped card grid (AC-1/AC-2/AC-3/AC-4/AC-5)", () => {
-  it("AC-1: renders at least 2 distinct language cards (not a single Python root)", () => {
-    render(<TechStack />);
+function advanceWellPastAllTyping() {
+  // Comfortably longer than the cumulative startDelay + typing duration for
+  // all 3 sequential blocks combined (worked out to ~6s at 18ms/char).
+  act(() => {
+    vi.advanceTimersByTime(10000);
+  });
+}
 
-    const languages = new Set(TECH_STACK.map((e) => e.language));
-    expect(languages.size).toBeGreaterThanOrEqual(2);
-    for (const language of languages) {
-      expect(screen.getByText(language)).toBeInTheDocument();
+describe("TechStack — sequential manifest terminal", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("has at least 3 distinct languages in its data, each with a real manifest command", () => {
+    expect(TECH_STACK.length).toBeGreaterThanOrEqual(3);
+    for (const entry of TECH_STACK) {
+      expect(entry.command.length).toBeGreaterThan(0);
+      expect(entry.tools.length).toBeGreaterThan(0);
     }
   });
 
-  it("AC-1: TypeScript is rendered as its own card, distinct from Python", () => {
+  it("renders every language's manifest command once typing completes", () => {
+    vi.useFakeTimers();
     render(<TechStack />);
+    advanceWellPastAllTyping();
 
-    expect(screen.getByText("Python")).toBeInTheDocument();
-    expect(screen.getByText("TypeScript")).toBeInTheDocument();
-  });
-
-  it("AC-2: each card renders its own tools as separate chips", () => {
-    render(<TechStack />);
-
-    const pythonEntry = TECH_STACK.find((e) => e.language === "Python")!;
-    const typescriptEntry = TECH_STACK.find((e) => e.language === "TypeScript")!;
-
-    for (const tool of pythonEntry.tools) {
-      expect(screen.getByText(tool)).toBeInTheDocument();
-    }
-    for (const tool of typescriptEntry.tools) {
-      expect(screen.getByText(tool)).toBeInTheDocument();
+    for (const entry of TECH_STACK) {
+      expect(document.body.textContent).toContain(entry.command);
     }
   });
 
-  it("AC-3: no tool renders that isn't present in TECH_STACK's own data (no invented technologies)", () => {
+  it("renders every tool for every language once typing finishes", () => {
+    vi.useFakeTimers();
     render(<TechStack />);
+    advanceWellPastAllTyping();
 
-    const allExpectedTools = new Set(TECH_STACK.flatMap((e) => e.tools));
-    // Sample assertion: a tool that was never in TECH_STACK must not appear
-    // as a chip (guards against silently reintroducing invented tech).
-    expect(allExpectedTools.has("Rust")).toBe(false);
+    for (const entry of TECH_STACK) {
+      for (const tool of entry.tools) {
+        expect(screen.getByText(tool)).toBeInTheDocument();
+      }
+    }
+  });
+
+  it("does not render any tool that isn't part of TECH_STACK's own data (no invented technologies)", () => {
+    vi.useFakeTimers();
+    render(<TechStack />);
+    advanceWellPastAllTyping();
+
+    // Model-architecture names deliberately excluded from the pip-style
+    // listing (see portfolio-data.ts comment) — they'd look fake next to
+    // real package names in an authentic "cat requirements.txt" rendering.
+    expect(screen.queryByText("DeepLabV3+")).not.toBeInTheDocument();
     expect(screen.queryByText("Rust")).not.toBeInTheDocument();
   });
 
-  it("AC-4: a language card renders correctly even with a short tools list (does not look empty/broken)", () => {
+  it("shows a typing cursor and no tool listing yet before typing starts (t=0)", () => {
+    vi.useFakeTimers();
     render(<TechStack />);
+    // No time advanced — first block's command hasn't started typing.
 
-    const typescriptEntry = TECH_STACK.find((e) => e.language === "TypeScript")!;
-    const card = screen.getByText("TypeScript").closest("div");
-    expect(card).toBeInTheDocument();
-    // The card's tool count label reflects the real (possibly short) list —
-    // not hidden or replaced with a placeholder.
-    expect(screen.getByText(`${typescriptEntry.tools.length} TOOLS`)).toBeInTheDocument();
+    expect(screen.queryByText(TECH_STACK[0]!.tools[0]!)).not.toBeInTheDocument();
   });
 
-  it("AC-5: long tool name chips carry wrap/break classes so they can't overflow the card", () => {
-    render(<TechStack />);
-
-    const longToolChip = screen.getByText("DeepLabV3+");
-    expect(longToolChip.className).toContain("break-words");
-    expect(longToolChip.className).toContain("max-w-full");
-  });
-
-  it("renders the correct language/tool count summary in the header", () => {
+  it("renders the correct language/package count summary in the header immediately (not gated on typing)", () => {
     render(<TechStack />);
 
     const totalTools = TECH_STACK.reduce((n, e) => n + e.tools.length, 0);
     expect(
-      screen.getByText(`${TECH_STACK.length} LANGUAGES · ${totalTools} TOOLS`),
+      screen.getByText(`${TECH_STACK.length} LANGUAGES · ${totalTools} PACKAGES`),
     ).toBeInTheDocument();
   });
 });
